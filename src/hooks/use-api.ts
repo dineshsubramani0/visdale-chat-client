@@ -48,7 +48,12 @@ export const useApi = () => {
     } catch (error: unknown) {
       let decryptedMessage = '';
 
-      if (error && typeof error === 'object' && 'isAxiosError' in error && (error as AxiosError).response) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'isAxiosError' in error &&
+        (error as AxiosError).response
+      ) {
         const axiosError = error as AxiosError;
         const encryptedData = axiosError.response?.data;
 
@@ -63,7 +68,7 @@ export const useApi = () => {
           decryptedMessage = decrypt(encryptedData.data) as string;
         }
       }
-   
+
       handleError(decryptedMessage, ErrorMessage);
       return null;
     }

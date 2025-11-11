@@ -1,11 +1,15 @@
 import { toast } from 'sonner';
 
-type ApiErrorType = string | string[] | { message?: string; errors?: string[] } | undefined;
+type ApiErrorType =
+  | string
+  | string[]
+  | { message?: string; errors?: string[] }
+  | undefined;
 
 export const useApiError = () => {
   return (error: ApiErrorType, defaultMessage?: string): string => {
     let errorMessage = 'An unexpected error occurred';
-    
+
     if (!error) {
       errorMessage = defaultMessage ?? errorMessage;
     } else if (typeof error === 'string') {

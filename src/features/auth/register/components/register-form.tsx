@@ -170,7 +170,7 @@ export function RegisterForm() {
                 type="button"
                 onClick={handleSendOtp}
                 disabled={isSending}
-                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
+                className="w-full bg-primary cursor-pointer text-white hover:bg-primary/80 transition-colors">
                 {isSending ? 'Sending OTP...' : 'Send Verification Code'}
               </Button>
             </>
@@ -194,7 +194,7 @@ export function RegisterForm() {
               <Button
                 type="button"
                 onClick={handleVerifyOtp}
-                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
+                className="w-full bg-primary cursor-pointer text-white hover:bg-primary/80 transition-colors">
                 Verify Code
               </Button>
 
@@ -223,7 +223,7 @@ export function RegisterForm() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute cursor-pointer right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -244,7 +244,7 @@ export function RegisterForm() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 cursor-pointer top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                   {showConfirmPassword ? (
                     <EyeOff size={20} />
@@ -261,7 +261,7 @@ export function RegisterForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
+                className="w-full cursor-pointer bg-primary text-white hover:bg-primary/80 transition-colors">
                 Create Account
               </Button>
             </>

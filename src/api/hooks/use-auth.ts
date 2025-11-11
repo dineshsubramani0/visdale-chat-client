@@ -11,9 +11,13 @@ import type {
   RegisterResponse,
   RegisterDto,
 } from '@/@types/auth/register.interface';
+import type {
+  LoginResponse,
+  LoginRequest,
+} from '@/@types/auth/login.interface';
 
 export const useAuth = () => {
-  const { requestOtp, verifyOtp, register } = useAuthApi();
+  const { requestOtp, verifyOtp, register, login } = useAuthApi();
 
   // -------------------- Request OTP --------------------
   const requestOtpMutation = useMutation<
@@ -57,9 +61,24 @@ export const useAuth = () => {
     },
   });
 
+  // -------------------- Login --------------------
+  const loginMutation = useMutation<
+    BaseApiResponse<LoginResponse>,
+    Error,
+    LoginRequest
+  >({
+    mutationKey: ['auth_login'],
+    mutationFn: async (payload) => {
+      const response = await login(payload);
+      if (!response) throw new Error('No response from API');
+      return response;
+    },
+  });
+
   return {
     requestOtpMutation,
     verifyOtpMutation,
     registerMutation,
+    loginMutation,
   };
 };

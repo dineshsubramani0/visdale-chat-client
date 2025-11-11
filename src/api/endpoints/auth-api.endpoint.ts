@@ -1,6 +1,10 @@
 // src/hooks/use-auth-api.ts
 import type { BaseApiResponse } from '@/@types/api/api.interface';
 import type {
+  LoginRequest,
+  LoginResponse,
+} from '@/@types/auth/login.interface';
+import type {
   RequestOtpDto,
   RequestOtpResponse,
   VerifyOtpDto,
@@ -20,7 +24,7 @@ export const useAuthApi = () => {
       payload: RequestOtpDto
     ): Promise<BaseApiResponse<RequestOtpResponse> | null> => {
       return fetchData<BaseApiResponse<RequestOtpResponse>>(
-        `${BASE_URL}/auth/request-otp`, // direct backend URL
+        `${BASE_URL}/auth/request-otp`,
         'POST',
         '',
         payload
@@ -43,6 +47,17 @@ export const useAuthApi = () => {
     ): Promise<BaseApiResponse<RegisterResponse> | null> => {
       return fetchData<BaseApiResponse<RegisterResponse>>(
         `${BASE_URL}/auth/register`,
+        'POST',
+        '',
+        payload
+      );
+    },
+
+    login: async (
+      payload: LoginRequest
+    ): Promise<BaseApiResponse<LoginResponse> | null> => {
+      return fetchData<BaseApiResponse<LoginResponse>>(
+        `${BASE_URL}/auth/login`,
         'POST',
         '',
         payload

@@ -18,7 +18,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { loginSchema } from './validation/validation';
-import { LocalStorageUtils } from '@/lib/local-storage-utils';
+import { useAuth } from '@/api/hooks/use-auth';
+import { CHAT_ROUTES_CONSTANT } from '@/routers/app/chat/chat-routes.constant';
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -29,6 +30,8 @@ export function LoginForm({
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
+  const { loginMutation } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -38,27 +41,22 @@ export function LoginForm({
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('Valid Form Data:', data);
     try {
-      const res = await fetch(
-        `http://localhost:5000/users?email=${data.email}&password=${data.password}`
-      );
+      const response = await loginMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+      });
 
-      if (!res.ok) throw new Error('Network response was not ok');
-      const users = await res.json();
+      const accessToken = response.data?.access_token;
+      if (!accessToken) throw new Error('No access token returned');
 
-      if (users.length > 0) {
-        toast.success(
-          `Welcome, ${users[0].firstName || 'User'}! Login successful 🎉`
-        );
-        LocalStorageUtils.setItem('chat_user', btoa(JSON.stringify(users[0])));
-        navigate('/dashboard');
-      } else {
-        toast.error('Invalid username or password');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed. Please try again later.');
+      // Save access token in sessionStorage
+      sessionStorage.setItem('access_token', accessToken);
+
+      toast.success(`Welcome! Login successful 🎉`);
+      navigate(CHAT_ROUTES_CONSTANT.CHAT);
+    } catch (err: unknown) {
+      console.log(err, 'On Login');
     }
   };
 
@@ -67,9 +65,7 @@ export function LoginForm({
       <Card>
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <CardDescription>Enter your email and password below</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
