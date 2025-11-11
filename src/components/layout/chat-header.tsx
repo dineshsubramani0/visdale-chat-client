@@ -85,17 +85,13 @@ export function ChatHeader({
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col min-w-0">
-          <p className="text-sm font-semibold truncate">{chatName || 'Group Chat'}</p>
+          <p className="text-sm font-semibold truncate">{chatName || 'Dinesh S'}</p>
           {isGroup ? (
             <p className="text-xs text-muted-foreground">{currentParticipants.length} participant{currentParticipants.length !== 1 ? 's' : ''}</p>
           ) : (
             <p className="text-xs flex items-center gap-1 text-green-500">
-              {currentParticipants[0]?.status === 'online' ? (
-                <>
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   Online
-                </>
-              ) : 'Offline'}
             </p>
           )}
         </div>
@@ -157,11 +153,16 @@ export function ChatHeader({
             </DialogContent>
           </Dialog>
         )}
+        {
+          isGroup && (
+            <>
+              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconPhone size={18} /></Button>
+              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconVideo size={18} /></Button>
+              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconInfoCircle size={18} /></Button>
+              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconDots size={18} /></Button></>
+          )
+        }
 
-        <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconPhone size={18} /></Button>
-        <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconVideo size={18} /></Button>
-        <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconInfoCircle size={18} /></Button>
-        <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconDots size={18} /></Button>
       </div>
     </header>
   );

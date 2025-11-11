@@ -18,10 +18,7 @@ export type ChatRoom = {
 
 // Dummy data
 const defaultUsers: ChatRoom[] = [
-  { id: 1, name: 'Sarah Johnson', lastMessage: 'See you soon!', unread: 1 },
-  { id: 2, name: 'Alex Carter', lastMessage: 'Got the files.', unread: 0 },
-  { id: 3, name: 'John Doe', lastMessage: 'Let’s meet tomorrow', unread: 3 },
-  { id: 4, name: 'Emily Clark', lastMessage: 'Thanks!', unread: 0 },
+  { id: 1, name: 'Dinesh S', lastMessage: 'See you soon!', unread: 1 },
 ];
 
 const defaultGroups: ChatRoom[] = [
@@ -36,7 +33,7 @@ interface ChatSidebarProps {
   groups?: ChatRoom[];
 }
 
-export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGroups = defaultGroups }: ChatSidebarProps) {
+export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGroups = defaultGroups }: Readonly<ChatSidebarProps>) {
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<number | null>(users[0]?.id || null);
   const [search, setSearch] = useState('');
