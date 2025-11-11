@@ -1,7 +1,8 @@
+import { AxiosError, type AxiosResponse } from 'axios';
+import { decrypt } from '@/lib/encryption';
+import { toast } from 'sonner';
 import client from '@/api/client';
 import { useApiError } from '@/hooks/use-api-error';
-import type { AxiosResponse } from 'axios';
-import { toast } from 'sonner';
 
 export const useApi = () => {
   const handleError = useApiError();
@@ -24,9 +25,7 @@ export const useApi = () => {
   ): Promise<T | null> => {
     try {
       let fullUrl = url;
-      if (params) {
-        fullUrl += `?${params}`;
-      }
+      if (params) fullUrl += `?${params}`;
 
       const response: AxiosResponse =
         method === 'GET' || method === 'DELETE'
@@ -46,8 +45,26 @@ export const useApi = () => {
       }
 
       return data;
-    } catch (error) {
-      handleError(error, ErrorMessage);
+    } catch (error: unknown) {
+      let decryptedMessage = '';
+
+      if (error && typeof error === 'object' && 'isAxiosError' in error && (error as AxiosError).response) {
+        const axiosError = error as AxiosError;
+        const encryptedData = axiosError.response?.data;
+
+        if (typeof encryptedData === 'string') {
+          decryptedMessage = decrypt(encryptedData) as string;
+        } else if (
+          encryptedData &&
+          typeof encryptedData === 'object' &&
+          'data' in encryptedData &&
+          typeof encryptedData.data === 'string'
+        ) {
+          decryptedMessage = decrypt(encryptedData.data) as string;
+        }
+      }
+   
+      handleError(decryptedMessage, ErrorMessage);
       return null;
     }
   };

@@ -1,3 +1,4 @@
+// src/components/auth/RegisterForm.tsx
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,9 +14,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link, useNavigate } from 'react-router-dom';
-import { registerSchema } from './validation/validation';
-import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/api/hooks/use-auth';
+import { registerSchema } from './validation/validation';
+import type { z } from 'zod';
+import type {
+  RequestOtpDto,
+  VerifyOtpDto,
+  RegisterDto,
+} from '@/@types/auth/register.interface';
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -25,14 +32,12 @@ export function RegisterForm() {
     'details'
   );
   const [isSending, setIsSending] = useState(false);
-  const [userDetails, setUserDetails] = useState<{
-    firstName: string;
-    lastName: string;
-    email: string;
-  } | null>(null);
+  const [userDetails, setUserDetails] = useState<RequestOtpDto | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { requestOtpMutation, verifyOtpMutation, registerMutation } = useAuth();
 
   const {
     register,
@@ -44,45 +49,67 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
+  // -------------------- Step 1: Send OTP --------------------
   const handleSendOtp = async () => {
     const valid = await trigger(['firstName', 'lastName', 'email']);
     if (!valid) return;
 
-    setUserDetails({
-      firstName: watch('firstName'),
-      lastName: watch('lastName'),
+    const payload: RequestOtpDto = {
+      first_name: watch('firstName'),
+      last_name: watch('lastName'),
       email: watch('email'),
-    });
+    };
 
     setIsSending(true);
-    setTimeout(() => {
-      toast.success(`OTP sent to ${watch('email')}`);
-      setIsSending(false);
+    try {
+      const res = await requestOtpMutation.mutateAsync(payload);
+      toast.success(res.data.message);
+      setUserDetails(payload);
       setStep('verify');
-    }, 1200);
+    } catch (err: unknown) {
+      if (err instanceof Error) console.log(err.message);
+    } finally {
+      setIsSending(false);
+    }
   };
 
+  // -------------------- Step 2: Verify OTP --------------------
   const handleVerifyOtp = async () => {
     const valid = await trigger('otp');
-    if (!valid) return;
+    if (!valid || !userDetails) return;
 
-    console.log('Verifying OTP for:', { ...userDetails, otp: watch('otp') });
-    setTimeout(() => {
-      toast.success('OTP verified successfully!');
+    const payload: VerifyOtpDto = {
+      email: userDetails.email,
+      otp: String(watch('otp')),
+    };
+
+    try {
+      const res = await verifyOtpMutation.mutateAsync(payload);
+      toast.success(res.data.message);
       setStep('password');
-    }, 800);
+    } catch (err: unknown) {
+      if (err instanceof Error) console.log(err.message);
+    }
   };
 
+  // -------------------- Step 3: Register --------------------
   const onSubmit = async (data: RegisterFormData) => {
-    if (step !== 'password') {
-      return toast.error('Please complete verification first.');
-    }
+    if (!userDetails) return toast.error('User details missing.');
+    if (step !== 'password')
+      return toast.error('Please complete OTP verification first.');
 
-    console.log('Registering user:', data);
-    setTimeout(() => {
-      toast.success(`🎉 Account created successfully for ${data.firstName}!`);
+    const payload: RegisterDto = {
+      ...userDetails, // first_name, last_name, email
+      password: data.password || '',
+    };
+
+    try {
+      const res = await registerMutation.mutateAsync(payload);
+      toast.success(res.data.message);
       navigate('/login');
-    }, 1000);
+    } catch (err: unknown) {
+      if (err instanceof Error) console.log(err.message);
+    }
   };
 
   return (
@@ -143,7 +170,7 @@ export function RegisterForm() {
                 type="button"
                 onClick={handleSendOtp}
                 disabled={isSending}
-                className="w-full cursor-pointer bg-primary text-white hover:bg-primary/80 transition-colors">
+                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
                 {isSending ? 'Sending OTP...' : 'Send Verification Code'}
               </Button>
             </>
@@ -167,7 +194,7 @@ export function RegisterForm() {
               <Button
                 type="button"
                 onClick={handleVerifyOtp}
-                className="w-full bg-primary cursor-pointer text-white hover:bg-primary/80 transition-colors">
+                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
                 Verify Code
               </Button>
 
@@ -196,7 +223,7 @@ export function RegisterForm() {
                 />
                 <button
                   type="button"
-                  className="absolute cursor-pointer right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -217,7 +244,7 @@ export function RegisterForm() {
                 />
                 <button
                   type="button"
-                  className="absolute cursor-pointer right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-[30px] text-gray-500 hover:text-gray-700 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                   {showConfirmPassword ? (
                     <EyeOff size={20} />
@@ -234,7 +261,7 @@ export function RegisterForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-primary cursor-pointer text-white hover:bg-primary/80 transition-colors">
+                className="w-full bg-primary text-white hover:bg-primary/80 transition-colors">
                 Create Account
               </Button>
             </>
