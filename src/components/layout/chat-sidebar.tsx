@@ -25,76 +25,132 @@ import { SessionStorageUtils } from '@/lib/session-storage-utils';
 import { decrypt } from '@/lib/encryption';
 import type { UserProfile } from '@/@types/auth/user.inferface';
 import type { ChatRoom } from '@/@types/chat/chat.interface';
+import { useNavigate } from 'react-router-dom';
+import { CHAT_ROUTES_CONSTANT } from '@/routers/app/chat/chat-routes.constant';
+import useChatId from '@/hooks/use-chat-id';
+import { useChat } from '@/api/hooks/use-chat';
+import { toast } from 'sonner';
 
-// Dummy data
-const defaultUsers: ChatRoom[] = [
-  { id: 1, name: 'Dinesh S', lastMessage: 'See you soon!', unread: 1 },
-];
-
-const defaultGroups: ChatRoom[] = [
-  { id: 101, name: 'Design Team', lastMessage: 'Update Figma mockups', unread: 2 },
-  { id: 102, name: 'Developers', lastMessage: 'Build ready!', unread: 0 },
-  { id: 103, name: 'Marketing', lastMessage: 'Campaign approved', unread: 1 },
-];
 
 interface ChatSidebarProps {
   onClose?: () => void;
 }
 
 export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const chatId = useChatId();
+  const navigate = useNavigate();
+
+  const { roomsQuery, createGroupMutation } = useChat();
+
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [users] = useState(defaultUsers);
-  const [groups, setGroups] = useState(defaultGroups);
+  const [groups, setGroups] = useState<ChatRoom[]>([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
 
   const storedValue = SessionStorageUtils.getItem('_ud');
+  const roomsQueryData = roomsQuery.data?.data;
+
   let _ud: UserProfile | null = null;
   if (storedValue) {
     const decrypted = decrypt(storedValue as string);
     _ud = JSON.parse(decrypted as string) as UserProfile;
   }
 
-  // Simulate loading
+  const defaultUsers: ChatRoom[] = [
+    {
+      id: _ud?.id ?? '',
+      name: `${_ud?.first_name} ${_ud?.last_name} (You)`,
+      lastMessage: '',
+      unread: 0,
+      isGroup: false,
+    },
+  ];
+
+  const [users] = useState(defaultUsers);
+
   useEffect(() => {
     const timer = setTimeout(() => setRoomsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Set first active chat
   useEffect(() => {
-    if (!activeId && users[0]?.id) {
-      setActiveId(users[0].id);
+    if (chatId) {
+      setActiveId(chatId);
+    } else if (!activeId && users[0]?.id) {
+      const firstId = users[0].id;
+      setActiveId(firstId);
     }
-  }, [users, activeId]);
+  }, [chatId, users, activeId, navigate]);
 
-  const handleRoomSelect = (roomId: number) => {
-    setActiveId(roomId);
-    onClose?.();
-  };
+  useEffect(() => {
+    if (roomsQueryData) {
+      const mappedGroups = roomsQueryData.map((room: ChatRoom) => ({
+        id: room.id,
+        name: room?.groupName ?? '',
+        lastMessage: room.lastMessage || '',
+        unread: 0,
+        isGroup: room.isGroup,
+      }));
 
-  const filteredUsers = users.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase())
-  );
+      setGroups(mappedGroups);
+    }
+  }, [roomsQueryData]);
+
+
+  // const filteredUsers = users.filter((u) =>
+  //   u.name.toLowerCase().includes(search.toLowerCase())
+  // );
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim()) return;
 
-    const newGroup: ChatRoom = {
-      id: Date.now(),
-      name: groupName,
-      lastMessage: '',
-      unread: 0,
-    };
+    try {
+      await createGroupMutation.mutateAsync(
+        {
+          groupName,
+          participants: [_ud?.id ?? ''],
+        },
+        {
+          onSuccess: (response) => {
+            const newGroup = response.data;
 
-    setGroups([newGroup, ...groups]);
-    setGroupName('');
-    setIsDialogOpen(false);
+            setGroups((prev) => [
+              ...prev,
+              {
+                id: newGroup.id,
+                name: groupName,
+                lastMessage: '',
+                unread: 0,
+                isGroup: true,
+              },
+            ]);
+
+
+            toast.success(`Group "${groupName}" created successfully!`);
+            navigate(`/chat/${newGroup.id}`);
+            setGroupName('');
+            setIsDialogOpen(false);
+          },
+          onError: (error) => {
+            toast.error('Failed to create group. Please try again.');
+            console.error(error);
+          },
+        },
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRoomSelect = (roomId: string) => {
+    setActiveId(roomId);
+    navigate(`${CHAT_ROUTES_CONSTANT.CHAT}/${roomId}`);
+    onClose?.();
   };
 
   const renderRoom = (room: ChatRoom) => (
@@ -107,8 +163,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
         activeId === room.id
           ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
           : 'hover:bg-muted/60 focus:ring-1 focus:ring-primary/30'
-      )}
-    >
+      )}>
       <Avatar className="h-9 w-9">
         <AvatarImage src={`/avatars/${room.id}.jpg`} />
         <AvatarFallback>{room.name.charAt(0)}</AvatarFallback>
@@ -119,7 +174,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
           {room.lastMessage}
         </p>
       </div>
-      {room.unread > 0 && (
+      {room?.unread > 0 && (
         <span className="min-h-[18px] min-w-[18px] text-[10px] flex items-center justify-center bg-primary text-primary-foreground rounded-full animate-pulse">
           {room.unread}
         </span>
@@ -146,8 +201,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
         <button
           aria-label="Close sidebar"
           className="md:hidden hover:bg-muted p-1 rounded-lg transition"
-          onClick={onClose}
-        >
+          onClick={onClose}>
           <IconX size={18} />
         </button>
       </div>
@@ -179,32 +233,34 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
         ) : (
           <ScrollArea className="h-full">
             <div className="mt-3 px-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              {/* <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Users
               </p>
               {filteredUsers.length ? (
                 filteredUsers.map(renderRoom)
               ) : (
                 <p className="text-xs text-muted-foreground px-4">No users</p>
-              )}
+              )} */}
 
               <div className="mt-4 flex items-center justify-between">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Groups
+                  Rooms
                 </p>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                  setGroupName('');
+                  setIsDialogOpen(open);
+                }}>
                   <DialogTrigger asChild>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                    >
+                      className="text-muted-foreground cursor-pointer hover:text-primary hover:bg-primary/10">
                       <IconPlus size={14} />
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm">
                     <DialogHeader>
-                      <DialogTitle>Create New Group</DialogTitle>
+                      <DialogTitle>Create New Room</DialogTitle>
                     </DialogHeader>
                     <div className="py-2">
                       <Input
@@ -216,10 +272,10 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
                     </div>
                     <DialogFooter>
                       <Button
+                        className='cursor-pointer'
                         onClick={handleCreateGroup}
-                        disabled={!groupName.trim()}
-                      >
-                        <IconUsers size={16} className="mr-1" /> Create Group
+                        disabled={!groupName.trim() || createGroupMutation.isPending}>
+                        <IconUsers size={16} className="mr-1" /> Create Room
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -256,12 +312,11 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
             title="Logout"
             aria-label="Logout"
             className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
-            onClick={handleLogout}
-          >
+            onClick={handleLogout}>
             <IconLogout size={16} />
           </button>
         </div>
       </div>
-    </aside>
+    </aside >
   );
 }

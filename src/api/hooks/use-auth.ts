@@ -19,7 +19,14 @@ import type { UserProfile } from '@/@types/auth/user.inferface';
 import { logout } from '@/lib/logout';
 
 export const useAuth = () => {
-  const { requestOtp, verifyOtp, register, login, me, logout: serviceLogout } = useAuthApi();
+  const {
+    requestOtp,
+    verifyOtp,
+    register,
+    login,
+    me,
+    logout: serviceLogout,
+  } = useAuthApi();
 
   // -------------------- Request OTP --------------------
   const requestOtpMutation = useMutation<

@@ -63,10 +63,9 @@ export function LoginForm({
       }
 
       toast.success('Welcome! Login successful 🎉');
-      navigate(`${CHAT_ROUTES_CONSTANT.CHAT}/${currentProfile?.id}`);
+      navigate(`${CHAT_ROUTES_CONSTANT.CHAT}`);
     } catch (err: unknown) {
       console.error(err, 'On Login');
-      toast.error('Login failed. Please check your credentials.');
     }
   };
 
@@ -106,8 +105,7 @@ export function LoginForm({
                 <button
                   type="button"
                   className="absolute right-3 top-[30px] text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
+                  onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
                 {errors.password && (
@@ -130,8 +128,7 @@ export function LoginForm({
               Don&apos;t have an account?{' '}
               <Link
                 to="/register"
-                className="underline underline-offset-4 text-primary hover:text-primary/80"
-              >
+                className="underline underline-offset-4 text-primary hover:text-primary/80">
                 Sign up
               </Link>
             </div>

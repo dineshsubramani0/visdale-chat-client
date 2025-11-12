@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils';
 export type Message = {
   id: number;
   text: string;
-  sender: 'me' | 'other';
+  sender: string;
   time: string;
+  name?: string;
   attachments?: string[];
 };
 

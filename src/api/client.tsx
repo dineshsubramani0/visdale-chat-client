@@ -38,58 +38,64 @@ function onRefreshed(token: string) {
 }
 
 // -------------------- Request Interceptor --------------------
-client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Encrypt body
-  if (config.data) config.data = { data: encrypt(config.data) };
+client.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    // Encrypt body
+    if (config.data) config.data = { data: encrypt(config.data) };
 
-  // Encrypt query params
-  if (config.params) config.params = { data: encodeURIComponent(encrypt(config.params)) };
+    // Encrypt query params
+    if (config.params)
+      config.params = { data: encodeURIComponent(encrypt(config.params)) };
 
-  let token: string | null = sessionStorage.getItem('access_token');
+    let token: string | null = sessionStorage.getItem('access_token');
 
-  if (token && isAccessTokenExpired(token)) {
-    if (!isRefreshing) {
-      isRefreshing = true;
-      try {
-        const response = await axios.post(
-          '/auth/refresh',
-          {},
-          {
-            withCredentials: true,
-            baseURL: import.meta.env.VITE_AUTH_API_URL,
+    if (token && isAccessTokenExpired(token)) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const response = await axios.post(
+            '/auth/refresh',
+            {},
+            {
+              withCredentials: true,
+              baseURL: import.meta.env.VITE_AUTH_API_URL,
+            }
+          );
+
+          const newToken = response.data?.access_token;
+          if (newToken) {
+            sessionStorage.setItem('access_token', newToken);
+            token = newToken;
+            onRefreshed(newToken);
+          } else {
+            sessionStorage.removeItem('access_token');
+            token = null;
+            onRefreshed('');
           }
-        );
-
-        const newToken = response.data?.access_token;
-        if (newToken) {
-          sessionStorage.setItem('access_token', newToken);
-          token = newToken;
-          onRefreshed(newToken);
-        } else {
+        } catch (error) {
           sessionStorage.removeItem('access_token');
           token = null;
           onRefreshed('');
+          console.log(error);
+        } finally {
+          isRefreshing = false;
         }
-      } catch (error) {
-        sessionStorage.removeItem('access_token');
-        token = null;
-        onRefreshed('');
-        console.log(error);
-      } finally {
-        isRefreshing = false;
+      } else {
+        // Wait for ongoing refresh to finish
+        token = await new Promise<string>((resolve) =>
+          subscribeTokenRefresh(resolve)
+        );
       }
-    } else {
-      // Wait for ongoing refresh to finish
-      token = await new Promise<string>((resolve) => subscribeTokenRefresh(resolve));
     }
-  }
 
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  return config;
-}, (error) => Promise.reject(error));
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // -------------------- Response Interceptor --------------------
 client.interceptors.response.use(
@@ -135,7 +141,9 @@ client.interceptors.response.use(
         }
       } else {
         // Wait for ongoing refresh
-        const token = await new Promise<string>((resolve) => subscribeTokenRefresh(resolve));
+        const token = await new Promise<string>((resolve) =>
+          subscribeTokenRefresh(resolve)
+        );
         if (token) {
           originalRequest.headers['Authorization'] = `Bearer ${token}`;
           return client(originalRequest);

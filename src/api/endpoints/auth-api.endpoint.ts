@@ -68,7 +68,7 @@ export const useAuthApi = () => {
       return fetchData<BaseApiResponse<UserProfile>>(
         `${BASE_URL}/auth/me`,
         'GET',
-        '',
+        ''
       );
     },
 

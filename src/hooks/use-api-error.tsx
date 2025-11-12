@@ -23,7 +23,7 @@ export const useApiError = () => {
     }
 
     toast.dismiss();
-    toast.error(defaultMessage ?? errorMessage);
+    toast.error(errorMessage ?? defaultMessage);
 
     return errorMessage;
   };

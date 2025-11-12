@@ -4,9 +4,10 @@ import ProtectedRoute from '@/components/auth/protected-route';
 import MainLayout from '@/layout/main-layout';
 import { CHAT_ROUTES_CONSTANT } from './chat-routes.constant';
 
+
 export const chatRoutes = [
   {
-    path: `${CHAT_ROUTES_CONSTANT.CHAT}/:userId`,
+    path: CHAT_ROUTES_CONSTANT.CHAT,
     element: (
       <ProtectedRoute>
         <MainLayout />
@@ -16,6 +17,11 @@ export const chatRoutes = [
     children: [
       {
         index: true,
+        element: <ChatPage />,
+        errorElement: <GlobalErrorBoundary />,
+      },
+      {
+        path: ':chatId',
         element: <ChatPage />,
         errorElement: <GlobalErrorBoundary />,
       },

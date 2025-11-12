@@ -4,8 +4,6 @@ import { AUTH_LOGIN_ROUTES_CONSTANT } from '@/routers/app/auth/login/auth-login-
 import { AUTH_REGISTER_ROUTES_CONSTANT } from '@/routers/app/auth/register/auth-register-routes.constant';
 import { SessionStorageUtils } from '@/lib/session-storage-utils';
 import { CHAT_ROUTES_CONSTANT } from '@/routers/app/chat/chat-routes.constant';
-import type { UserProfile } from '@/@types/auth/user.inferface';
-import { decrypt } from '@/lib/encryption';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -18,14 +16,6 @@ interface ProtectedRouteProps {
  */
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
-  const storedValue = SessionStorageUtils.getItem('_ud');
-
-  let _ud: UserProfile | null = null;
-
-  if (storedValue) {
-    const decrypted = decrypt(storedValue as string); // returns string
-    _ud = JSON.parse(decrypted as string) as UserProfile;
-  }
 
   const currentPath = location.pathname.replace(/\/$/, '');
 
@@ -38,7 +28,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     currentPath === AUTH_REGISTER_ROUTES_CONSTANT.REGISTER_PAGE;
 
   if (isAuthenticated && isAuthPage) {
-    return <Navigate to={`${CHAT_ROUTES_CONSTANT.CHAT}/${_ud?.id}`} replace />;
+    return <Navigate to={`${CHAT_ROUTES_CONSTANT.CHAT}`} replace />;
   }
 
   // Protect other routes: redirect unauthenticated users to login
