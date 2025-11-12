@@ -1,6 +1,6 @@
 // src/hooks/use-auth-mutations.ts
 import { useAuthApi } from '@/api/endpoints/auth-api.endpoint';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import type { BaseApiResponse } from '@/@types/api/api.interface';
 import type {
@@ -15,9 +15,11 @@ import type {
   LoginResponse,
   LoginRequest,
 } from '@/@types/auth/login.interface';
+import type { UserProfile } from '@/@types/auth/user.inferface';
+import { logout } from '@/lib/logout';
 
 export const useAuth = () => {
-  const { requestOtp, verifyOtp, register, login } = useAuthApi();
+  const { requestOtp, verifyOtp, register, login, me, logout: serviceLogout } = useAuthApi();
 
   // -------------------- Request OTP --------------------
   const requestOtpMutation = useMutation<
@@ -75,10 +77,34 @@ export const useAuth = () => {
     },
   });
 
+  // -------------------- Get User Profile --------------------
+  const meQuery = useQuery<BaseApiResponse<UserProfile> | null>({
+    queryKey: ['auth_me'],
+    queryFn: async () => {
+      const response = await me();
+      if (!response) throw new Error('No response from API');
+      return response;
+    },
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
+  // -------------------- Logout --------------------
+  const logoutMutation = useMutation({
+    mutationKey: ['auth_logout'],
+    mutationFn: async () => {
+      const response = await serviceLogout();
+      if (!response) throw new Error('No response from API');
+      logout();
+      return response;
+    },
+  });
+
   return {
     requestOtpMutation,
     verifyOtpMutation,
     registerMutation,
     loginMutation,
+    meQuery,
+    logoutMutation,
   };
 };

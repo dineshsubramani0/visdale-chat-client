@@ -1,6 +1,9 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import { socketReducer } from './features/socket';
 
-const combinedReducers = {};
+const combinedReducers = {
+  ...socketReducer,
+};
 
 const rootReducer = combineReducers(combinedReducers);
 

@@ -20,6 +20,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema } from './validation/validation';
 import { useAuth } from '@/api/hooks/use-auth';
 import { CHAT_ROUTES_CONSTANT } from '@/routers/app/chat/chat-routes.constant';
+import { encrypt } from '@/lib/encryption';
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -30,7 +31,7 @@ export function LoginForm({
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  const { loginMutation } = useAuth();
+  const { loginMutation, meQuery } = useAuth();
 
   const {
     register,
@@ -42,21 +43,30 @@ export function LoginForm({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await loginMutation.mutateAsync({
+      // Login
+      const loginResponse = await loginMutation.mutateAsync({
         email: data.email,
         password: data.password,
       });
 
-      const accessToken = response.data?.access_token;
+      const accessToken = loginResponse.data?.access_token;
       if (!accessToken) throw new Error('No access token returned');
 
-      // Save access token in sessionStorage
       sessionStorage.setItem('access_token', accessToken);
 
-      toast.success(`Welcome! Login successful 🎉`);
+      // Fetch current user profile after login
+      const profileResponse = await meQuery.refetch();
+      const currentProfile = profileResponse?.data?.data;
+
+      if (currentProfile) {
+        sessionStorage.setItem('_ud', encrypt(JSON.stringify(currentProfile)));
+      }
+
+      toast.success('Welcome! Login successful 🎉');
       navigate(CHAT_ROUTES_CONSTANT.CHAT);
     } catch (err: unknown) {
-      console.log(err, 'On Login');
+      console.error(err, 'On Login');
+      toast.error('Login failed. Please check your credentials.');
     }
   };
 
@@ -96,7 +106,8 @@ export function LoginForm({
                 <button
                   type="button"
                   className="absolute right-3 top-[30px] text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}>
+                  onClick={() => setShowPassword(!showPassword)}
+                >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
                 {errors.password && (
@@ -119,7 +130,8 @@ export function LoginForm({
               Don&apos;t have an account?{' '}
               <Link
                 to="/register"
-                className="underline underline-offset-4 text-primary hover:text-primary/80">
+                className="underline underline-offset-4 text-primary hover:text-primary/80"
+              >
                 Sign up
               </Link>
             </div>

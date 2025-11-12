@@ -1,9 +1,25 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { IconMenu, IconUser, IconPlus, IconPhone, IconVideo, IconInfoCircle, IconDots } from '@tabler/icons-react';
+import {
+  IconMenu,
+  IconUser,
+  IconPlus,
+  IconPhone,
+  IconVideo,
+  IconInfoCircle,
+  IconDots,
+} from '@tabler/icons-react';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 type Participant = {
   id: number;
@@ -26,7 +42,8 @@ export function ChatHeader({
   onAddParticipants?: (users: Participant[]) => void;
 }>) {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
-  const [currentParticipants, setCurrentParticipants] = useState<Participant[]>(participants);
+  const [currentParticipants, setCurrentParticipants] =
+    useState<Participant[]>(participants);
   const [search, setSearch] = useState('');
 
   const dummyUsers: Participant[] = [
@@ -70,8 +87,7 @@ export function ChatHeader({
           size="icon"
           variant="ghost"
           className="md:hidden mr-2"
-          onClick={onOpenSidebar}
-        >
+          onClick={onOpenSidebar}>
           <IconMenu size={20} />
         </Button>
       )}
@@ -79,19 +95,27 @@ export function ChatHeader({
       {/* Chat info */}
       <div className="flex items-center gap-3 min-w-0">
         <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-          <AvatarImage src={currentParticipants?.[0]?.image || '/avatars/default.jpg'} alt={chatName || 'Chat'} />
+          <AvatarImage
+            src={currentParticipants?.[0]?.image || '/avatars/default.jpg'}
+            alt={chatName || 'Chat'}
+          />
           <AvatarFallback>
             <IconUser size={16} />
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col min-w-0">
-          <p className="text-sm font-semibold truncate">{chatName || 'Dinesh S'}</p>
+          <p className="text-sm font-semibold truncate">
+            {chatName || 'Dinesh S'}
+          </p>
           {isGroup ? (
-            <p className="text-xs text-muted-foreground">{currentParticipants.length} participant{currentParticipants.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentParticipants.length} participant
+              {currentParticipants.length !== 1 ? 's' : ''}
+            </p>
           ) : (
             <p className="text-xs flex items-center gap-1 text-green-500">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Online
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              Online
             </p>
           )}
         </div>
@@ -119,10 +143,14 @@ export function ChatHeader({
               />
               <div className="max-h-72 overflow-y-auto space-y-2">
                 {filteredUsers.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-3">No users found</p>
+                  <p className="text-sm text-muted-foreground text-center py-3">
+                    No users found
+                  </p>
                 )}
                 {filteredUsers.map((user) => (
-                  <label key={user.id} className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 cursor-pointer transition">
+                  <label
+                    key={user.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 cursor-pointer transition">
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -136,7 +164,10 @@ export function ChatHeader({
                       </Avatar>
                       <div className="flex flex-col text-sm">
                         <span>{user.name}</span>
-                        <span className={`text-[10px] ${user.status === 'online' ? 'text-green-500' : 'text-muted-foreground'}`}>{user.status}</span>
+                        <span
+                          className={`text-[10px] ${user.status === 'online' ? 'text-green-500' : 'text-muted-foreground'}`}>
+                          {user.status}
+                        </span>
                       </div>
                     </div>
                   </label>
@@ -146,23 +177,43 @@ export function ChatHeader({
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button onClick={handleAddParticipants} disabled={selectedUsers.length === 0}>
+                <Button
+                  onClick={handleAddParticipants}
+                  disabled={selectedUsers.length === 0}>
                   Add
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
-        {
-          isGroup && (
-            <>
-              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconPhone size={18} /></Button>
-              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconVideo size={18} /></Button>
-              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconInfoCircle size={18} /></Button>
-              <Button size="icon" variant="ghost" className="hover:bg-primary/10 text-muted-foreground"><IconDots size={18} /></Button></>
-          )
-        }
-
+        {isGroup && (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-primary/10 text-muted-foreground">
+              <IconPhone size={18} />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-primary/10 text-muted-foreground">
+              <IconVideo size={18} />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-primary/10 text-muted-foreground">
+              <IconInfoCircle size={18} />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-primary/10 text-muted-foreground">
+              <IconDots size={18} />
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );

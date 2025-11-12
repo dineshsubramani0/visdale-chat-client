@@ -1,6 +1,6 @@
 import { AUTH_LOGIN_ROUTES_CONSTANT } from '@/routers/app/auth/login/auth-login-routes.constant';
 import { toast } from 'sonner';
-import { LocalStorageUtils } from './local-storage-utils';
+import { SessionStorageUtils } from './session-storage-utils';
 
 /**
  * Logs out the user by clearing session storage, signing out from Azure, and redirecting.
@@ -11,9 +11,10 @@ export const logout = async () => {
     toast.success('You have been logged out');
     // Redirect to the login page
     // localStorage.clear();
-    LocalStorageUtils.removeItem('chat_user');
+    SessionStorageUtils.removeItem('access_token');
+    SessionStorageUtils.removeItem('_ud');
     setTimeout(() => {
-      window.location.href = AUTH_LOGIN_ROUTES_CONSTANT.LOGIN_PAGE;
+      globalThis.location.href = AUTH_LOGIN_ROUTES_CONSTANT.LOGIN_PAGE;
     }, 1500);
   } catch (error) {
     console.error('Logout failed:', error);

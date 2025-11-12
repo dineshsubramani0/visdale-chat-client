@@ -12,11 +12,11 @@ import type {
   RegisterDto,
   RegisterResponse,
 } from '@/@types/auth/register.interface';
+import type { UserProfile } from '@/@types/auth/user.inferface';
 import { useApi } from '@/hooks/use-api';
 
 export const useAuthApi = () => {
   const { fetchData } = useApi();
-
   const BASE_URL = import.meta.env.VITE_AUTH_API_URL;
 
   return {
@@ -61,6 +61,22 @@ export const useAuthApi = () => {
         'POST',
         '',
         payload
+      );
+    },
+
+    me: async (): Promise<BaseApiResponse<UserProfile> | null> => {
+      return fetchData<BaseApiResponse<UserProfile>>(
+        `${BASE_URL}/auth/me`,
+        'GET',
+        '',
+      );
+    },
+
+    logout: async (): Promise<BaseApiResponse<{ message: string }> | null> => {
+      return fetchData<BaseApiResponse<{ message: string }>>(
+        `${BASE_URL}/auth/logout`,
+        'POST',
+        ''
       );
     },
   };

@@ -4,10 +4,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { IconX, IconMessageCircle2, IconPlus, IconUsers, IconLogout } from '@tabler/icons-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  IconX,
+  IconMessageCircle2,
+  IconPlus,
+  IconUsers,
+  IconLogout,
+} from '@tabler/icons-react';
 import clsx from 'clsx';
 import { ModeToggle } from '../theme/mode-toggle';
+import { useAuth } from '@/api/hooks/use-auth';
+import { SessionStorageUtils } from '@/lib/session-storage-utils';
+import { decrypt } from '@/lib/encryption';
+import type { UserProfile } from '@/@types/auth/user.inferface';
 
 export type ChatRoom = {
   id: number;
@@ -22,7 +39,12 @@ const defaultUsers: ChatRoom[] = [
 ];
 
 const defaultGroups: ChatRoom[] = [
-  { id: 101, name: 'Design Team', lastMessage: 'Update Figma mockups', unread: 2 },
+  {
+    id: 101,
+    name: 'Design Team',
+    lastMessage: 'Update Figma mockups',
+    unread: 2,
+  },
   { id: 102, name: 'Developers', lastMessage: 'Build ready!', unread: 0 },
   { id: 103, name: 'Marketing', lastMessage: 'Campaign approved', unread: 1 },
 ];
@@ -33,13 +55,26 @@ interface ChatSidebarProps {
   groups?: ChatRoom[];
 }
 
-export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGroups = defaultGroups }: Readonly<ChatSidebarProps>) {
+export function ChatSidebar({
+  onClose,
+  users = defaultUsers,
+  groups: initialGroups = defaultGroups,
+}: Readonly<ChatSidebarProps>) {
+  const { logoutMutation } = useAuth();
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<number | null>(users[0]?.id || null);
   const [search, setSearch] = useState('');
   const [groups, setGroups] = useState(initialGroups);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const storedValue = SessionStorageUtils.getItem('_ud');
+
+  let _ud: UserProfile | null = null;
+
+  if (storedValue) {
+    const decrypted = decrypt(storedValue as string); // returns string
+    _ud = JSON.parse(decrypted as string) as UserProfile;
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000);
@@ -64,8 +99,12 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
     setIsDialogOpen(false);
   };
 
-  const filteredUsers = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredGroups = groups.filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   const renderRoom = (room: ChatRoom) => (
     <button
@@ -77,8 +116,7 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
         activeId === room.id
           ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
           : 'hover:bg-muted/60 focus:ring-1 focus:ring-primary/30'
-      )}
-    >
+      )}>
       <Avatar className="h-9 w-9">
         <AvatarImage src={`/avatars/${room.id}.jpg`} />
         <AvatarFallback>{room.name.charAt(0)}</AvatarFallback>
@@ -86,7 +124,9 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{room.name}</p>
-        <p className="text-xs text-muted-foreground truncate">{room.lastMessage}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {room.lastMessage}
+        </p>
       </div>
 
       {room.unread > 0 && (
@@ -96,6 +136,15 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
       )}
     </button>
   );
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      console.log('Logged out successfully');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
+  };
 
   return (
     <aside className="w-80 h-full flex flex-col bg-background/90 border-r border-border md:relative fixed z-40 md:translate-x-0 shadow-sm">
@@ -113,8 +162,7 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
         <button
           aria-label="Close sidebar"
           className="md:hidden hover:bg-muted p-1 rounded-lg transition"
-          onClick={onClose}
-        >
+          onClick={onClose}>
           <IconX size={18} />
         </button>
       </div>
@@ -151,7 +199,11 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Users
               </p>
-              {filteredUsers.length ? filteredUsers.map(renderRoom) : <p className="text-xs text-muted-foreground px-4">No users</p>}
+              {filteredUsers.length ? (
+                filteredUsers.map(renderRoom)
+              ) : (
+                <p className="text-xs text-muted-foreground px-4">No users</p>
+              )}
 
               <div className="mt-4 flex items-center justify-between">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -159,7 +211,10 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
                 </p>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-primary hover:bg-primary/10">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-primary hover:bg-primary/10">
                       <IconPlus size={14} />
                     </Button>
                   </DialogTrigger>
@@ -176,14 +231,20 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
                       />
                     </div>
                     <DialogFooter>
-                      <Button onClick={handleCreateGroup} disabled={!groupName.trim()}>
+                      <Button
+                        onClick={handleCreateGroup}
+                        disabled={!groupName.trim()}>
                         <IconUsers size={16} className="mr-1" /> Create Group
                       </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>
-              {filteredGroups.length ? filteredGroups.map(renderRoom) : <p className="text-xs text-muted-foreground px-4">No groups</p>}
+              {filteredGroups.length ? (
+                filteredGroups.map(renderRoom)
+              ) : (
+                <p className="text-xs text-muted-foreground px-4">No groups</p>
+              )}
             </div>
           </ScrollArea>
         )}
@@ -193,10 +254,13 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
         <div className="flex items-center gap-2">
           <Avatar className="h-9 w-9">
             <AvatarImage src="/avatars/user.jpg" />
-            <AvatarFallback>U</AvatarFallback>
+            <AvatarFallback>
+              {_ud?.first_name ? _ud.first_name[0].toUpperCase() : 'U'}
+            </AvatarFallback>
+
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-xs font-medium leading-tight">Dinesh S</span>
+            <span className="text-xs font-medium leading-tight">{`${_ud?.first_name ?? ''} ${_ud?.last_name ?? ''}` }</span>
             <span className="text-[10px] text-green-500">Online</span>
           </div>
         </div>
@@ -206,7 +270,11 @@ export function ChatSidebar({ onClose, users = defaultUsers, groups: initialGrou
           <button
             title="Logout"
             aria-label="Logout"
-            className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition">
+            className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
+            onClick={() => {
+
+              handleLogout();
+            }}>
             <IconLogout size={16} />
           </button>
         </div>

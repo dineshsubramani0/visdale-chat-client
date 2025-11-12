@@ -17,8 +17,7 @@ export default function MainLayout() {
       <div
         className={`fixed inset-0 z-50 md:hidden flex transition-all duration-300 ${
           sidebarOpen ? 'visible opacity-100' : 'invisible opacity-0'
-        }`}
-      >
+        }`}>
         {/* Backdrop as button for full accessibility */}
         <button
           type="button"
