@@ -21,17 +21,10 @@ import {
 } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { ModeToggle } from '../theme/mode-toggle';
-import { useAuth } from '@/api/hooks/use-auth';
 import { SessionStorageUtils } from '@/lib/session-storage-utils';
 import { decrypt } from '@/lib/encryption';
 import type { UserProfile } from '@/@types/auth/user.inferface';
-
-export type ChatRoom = {
-  id: number;
-  name: string;
-  lastMessage: string;
-  unread: number;
-};
+import type { ChatRoom } from '@/@types/chat/chat.interface';
 
 // Dummy data
 const defaultUsers: ChatRoom[] = [
@@ -39,64 +32,47 @@ const defaultUsers: ChatRoom[] = [
 ];
 
 const defaultGroups: ChatRoom[] = [
-  {
-    id: 101,
-    name: 'Design Team',
-    lastMessage: 'Update Figma mockups',
-    unread: 2,
-  },
+  { id: 101, name: 'Design Team', lastMessage: 'Update Figma mockups', unread: 2 },
   { id: 102, name: 'Developers', lastMessage: 'Build ready!', unread: 0 },
   { id: 103, name: 'Marketing', lastMessage: 'Campaign approved', unread: 1 },
 ];
 
 interface ChatSidebarProps {
   onClose?: () => void;
-  users?: ChatRoom[];
-  groups?: ChatRoom[];
 }
 
-export function ChatSidebar({
-  onClose,
-  users = defaultUsers,
-  groups: initialGroups = defaultGroups,
-}: Readonly<ChatSidebarProps>) {
-  const { logoutMutation } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [activeId, setActiveId] = useState<number | null>(users[0]?.id || null);
+export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
+  const [activeId, setActiveId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [groups, setGroups] = useState(initialGroups);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [users] = useState(defaultUsers);
+  const [groups, setGroups] = useState(defaultGroups);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+
   const storedValue = SessionStorageUtils.getItem('_ud');
-
   let _ud: UserProfile | null = null;
-
   if (storedValue) {
-    const decrypted = decrypt(storedValue as string); // returns string
+    const decrypted = decrypt(storedValue as string);
     _ud = JSON.parse(decrypted as string) as UserProfile;
   }
 
+  // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
+    const timer = setTimeout(() => setRoomsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Set first active chat
+  useEffect(() => {
+    if (!activeId && users[0]?.id) {
+      setActiveId(users[0].id);
+    }
+  }, [users, activeId]);
 
   const handleRoomSelect = (roomId: number) => {
     setActiveId(roomId);
     onClose?.();
-  };
-
-  const handleCreateGroup = () => {
-    if (!groupName.trim()) return;
-    const newGroup: ChatRoom = {
-      id: Date.now(),
-      name: groupName,
-      lastMessage: 'New group created',
-      unread: 0,
-    };
-    setGroups([newGroup, ...groups]);
-    setGroupName('');
-    setIsDialogOpen(false);
   };
 
   const filteredUsers = users.filter((u) =>
@@ -105,6 +81,21 @@ export function ChatSidebar({
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleCreateGroup = () => {
+    if (!groupName.trim()) return;
+
+    const newGroup: ChatRoom = {
+      id: Date.now(),
+      name: groupName,
+      lastMessage: '',
+      unread: 0,
+    };
+
+    setGroups([newGroup, ...groups]);
+    setGroupName('');
+    setIsDialogOpen(false);
+  };
 
   const renderRoom = (room: ChatRoom) => (
     <button
@@ -116,19 +107,18 @@ export function ChatSidebar({
         activeId === room.id
           ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
           : 'hover:bg-muted/60 focus:ring-1 focus:ring-primary/30'
-      )}>
+      )}
+    >
       <Avatar className="h-9 w-9">
         <AvatarImage src={`/avatars/${room.id}.jpg`} />
         <AvatarFallback>{room.name.charAt(0)}</AvatarFallback>
       </Avatar>
-
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{room.name}</p>
         <p className="text-xs text-muted-foreground truncate">
           {room.lastMessage}
         </p>
       </div>
-
       {room.unread > 0 && (
         <span className="min-h-[18px] min-w-[18px] text-[10px] flex items-center justify-center bg-primary text-primary-foreground rounded-full animate-pulse">
           {room.unread}
@@ -137,13 +127,8 @@ export function ChatSidebar({
     </button>
   );
 
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      console.log('Logged out successfully');
-    } catch (err) {
-      console.error('Logout failed', err);
-    }
+  const handleLogout = () => {
+    console.log('Logout clicked');
   };
 
   return (
@@ -158,30 +143,28 @@ export function ChatSidebar({
             Chats
           </h2>
         </div>
-
         <button
           aria-label="Close sidebar"
           className="md:hidden hover:bg-muted p-1 rounded-lg transition"
-          onClick={onClose}>
+          onClick={onClose}
+        >
           <IconX size={18} />
         </button>
       </div>
 
       {/* Search */}
       <div className="p-3 border-b border-border">
-        <div className="relative">
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-3 text-sm bg-muted/40 rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-          />
-        </div>
+        <Input
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-3 text-sm bg-muted/40 rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+        />
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-hidden">
-        {loading ? (
+        {roomsLoading ? (
           <div className="p-4 space-y-3 h-full overflow-y-auto">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -214,7 +197,8 @@ export function ChatSidebar({
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-muted-foreground hover:text-primary hover:bg-primary/10">
+                      className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    >
                       <IconPlus size={14} />
                     </Button>
                   </DialogTrigger>
@@ -233,7 +217,8 @@ export function ChatSidebar({
                     <DialogFooter>
                       <Button
                         onClick={handleCreateGroup}
-                        disabled={!groupName.trim()}>
+                        disabled={!groupName.trim()}
+                      >
                         <IconUsers size={16} className="mr-1" /> Create Group
                       </Button>
                     </DialogFooter>
@@ -249,6 +234,7 @@ export function ChatSidebar({
           </ScrollArea>
         )}
       </div>
+
       {/* Footer */}
       <div className="p-3 border-t border-border flex items-center justify-between bg-muted/40 backdrop-blur-sm">
         <div className="flex items-center gap-2">
@@ -257,10 +243,9 @@ export function ChatSidebar({
             <AvatarFallback>
               {_ud?.first_name ? _ud.first_name[0].toUpperCase() : 'U'}
             </AvatarFallback>
-
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-xs font-medium leading-tight">{`${_ud?.first_name ?? ''} ${_ud?.last_name ?? ''}` }</span>
+            <span className="text-xs font-medium leading-tight">{`${_ud?.first_name ?? ''} ${_ud?.last_name ?? ''}`}</span>
             <span className="text-[10px] text-green-500">Online</span>
           </div>
         </div>
@@ -271,10 +256,8 @@ export function ChatSidebar({
             title="Logout"
             aria-label="Logout"
             className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
-            onClick={() => {
-
-              handleLogout();
-            }}>
+            onClick={handleLogout}
+          >
             <IconLogout size={16} />
           </button>
         </div>

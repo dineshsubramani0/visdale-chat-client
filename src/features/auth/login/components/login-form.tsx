@@ -63,7 +63,7 @@ export function LoginForm({
       }
 
       toast.success('Welcome! Login successful 🎉');
-      navigate(CHAT_ROUTES_CONSTANT.CHAT);
+      navigate(`${CHAT_ROUTES_CONSTANT.CHAT}/${currentProfile?.id}`);
     } catch (err: unknown) {
       console.error(err, 'On Login');
       toast.error('Login failed. Please check your credentials.');

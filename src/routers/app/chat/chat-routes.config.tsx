@@ -6,7 +6,7 @@ import { CHAT_ROUTES_CONSTANT } from './chat-routes.constant';
 
 export const chatRoutes = [
   {
-    path: CHAT_ROUTES_CONSTANT.CHAT,
+    path: `${CHAT_ROUTES_CONSTANT.CHAT}/:userId`,
     element: (
       <ProtectedRoute>
         <MainLayout />
