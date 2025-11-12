@@ -21,8 +21,6 @@ import {
 } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { ModeToggle } from '../theme/mode-toggle';
-import { SessionStorageUtils } from '@/lib/session-storage-utils';
-import { decrypt } from '@/lib/encryption';
 import type { UserProfile } from '@/@types/auth/user.inferface';
 import type { ChatRoom } from '@/@types/chat/chat.interface';
 import { useNavigate } from 'react-router-dom';
@@ -30,17 +28,22 @@ import { CHAT_ROUTES_CONSTANT } from '@/routers/app/chat/chat-routes.constant';
 import useChatId from '@/hooks/use-chat-id';
 import { useChat } from '@/api/hooks/use-chat';
 import { toast } from 'sonner';
-
+import { useAuth } from '@/api/hooks/use-auth';
 
 interface ChatSidebarProps {
   onClose?: () => void;
+  currentUser: UserProfile | null;
 }
 
-export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
+export function ChatSidebar({
+  onClose,
+  currentUser,
+}: Readonly<ChatSidebarProps>) {
   const chatId = useChatId();
   const navigate = useNavigate();
 
   const { roomsQuery, createGroupMutation } = useChat();
+  const { logoutMutation } = useAuth();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -49,19 +52,12 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
   const [groups, setGroups] = useState<ChatRoom[]>([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
 
-  const storedValue = SessionStorageUtils.getItem('_ud');
   const roomsQueryData = roomsQuery.data?.data;
-
-  let _ud: UserProfile | null = null;
-  if (storedValue) {
-    const decrypted = decrypt(storedValue as string);
-    _ud = JSON.parse(decrypted as string) as UserProfile;
-  }
 
   const defaultUsers: ChatRoom[] = [
     {
-      id: _ud?.id ?? '',
-      name: `${_ud?.first_name} ${_ud?.last_name} (You)`,
+      id: currentUser?.id ?? '',
+      name: `${currentUser?.first_name} ${currentUser?.last_name} (You)`,
       lastMessage: '',
       unread: 0,
       isGroup: false,
@@ -98,7 +94,6 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
     }
   }, [roomsQueryData]);
 
-
   // const filteredUsers = users.filter((u) =>
   //   u.name.toLowerCase().includes(search.toLowerCase())
   // );
@@ -113,7 +108,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
       await createGroupMutation.mutateAsync(
         {
           groupName,
-          participants: [_ud?.id ?? ''],
+          participants: [currentUser?.id ?? ''],
         },
         {
           onSuccess: (response) => {
@@ -130,7 +125,6 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
               },
             ]);
 
-
             toast.success(`Group "${groupName}" created successfully!`);
             navigate(`/chat/${newGroup.id}`);
             setGroupName('');
@@ -140,7 +134,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
             toast.error('Failed to create group. Please try again.');
             console.error(error);
           },
-        },
+        }
       );
     } catch (err) {
       console.error(err);
@@ -184,6 +178,7 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
 
   const handleLogout = () => {
     console.log('Logout clicked');
+    logoutMutation.mutate();
   };
 
   return (
@@ -246,10 +241,12 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Rooms
                 </p>
-                <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                  setGroupName('');
-                  setIsDialogOpen(open);
-                }}>
+                <Dialog
+                  open={isDialogOpen}
+                  onOpenChange={(open) => {
+                    setGroupName('');
+                    setIsDialogOpen(open);
+                  }}>
                   <DialogTrigger asChild>
                     <Button
                       size="icon"
@@ -272,9 +269,11 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
                     </div>
                     <DialogFooter>
                       <Button
-                        className='cursor-pointer'
+                        className="cursor-pointer"
                         onClick={handleCreateGroup}
-                        disabled={!groupName.trim() || createGroupMutation.isPending}>
+                        disabled={
+                          !groupName.trim() || createGroupMutation.isPending
+                        }>
                         <IconUsers size={16} className="mr-1" /> Create Room
                       </Button>
                     </DialogFooter>
@@ -297,11 +296,13 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
           <Avatar className="h-9 w-9">
             <AvatarImage src="/avatars/user.jpg" />
             <AvatarFallback>
-              {_ud?.first_name ? _ud.first_name[0].toUpperCase() : 'U'}
+              {currentUser?.first_name
+                ? currentUser.first_name[0].toUpperCase()
+                : 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-xs font-medium leading-tight">{`${_ud?.first_name ?? ''} ${_ud?.last_name ?? ''}`}</span>
+            <span className="text-xs font-medium leading-tight">{`${currentUser?.first_name ?? ''} ${currentUser?.last_name ?? ''}`}</span>
             <span className="text-[10px] text-green-500">Online</span>
           </div>
         </div>
@@ -311,12 +312,12 @@ export function ChatSidebar({ onClose }: Readonly<ChatSidebarProps>) {
           <button
             title="Logout"
             aria-label="Logout"
-            className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
+            className="p-1.5 cursor-pointer rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
             onClick={handleLogout}>
             <IconLogout size={16} />
           </button>
         </div>
       </div>
-    </aside >
+    </aside>
   );
 }

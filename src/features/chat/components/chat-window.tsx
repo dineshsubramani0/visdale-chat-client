@@ -4,14 +4,62 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const initialMessages: Message[] = [
-  { id: 1, text: 'Hey everyone 👋', sender: 'me', name: 'You', time: '10:00 AM' },
-  { id: 2, text: 'Hi Dinesh! How’s the new feature going?', sender: 'sarah', name: 'Sarah', time: '10:01 AM' },
-  { id: 3, text: 'Morning folks ☀️', sender: 'mike', name: 'Mike', time: '10:02 AM' },
-  { id: 4, text: 'Hey Mike! Just fixing some bugs 😅', sender: 'me', name: 'You', time: '10:03 AM' },
-  { id: 5, text: 'Cool. Need any help with the backend?', sender: 'alex', name: 'Alex', time: '10:04 AM' },
-  { id: 6, text: 'Actually yes, maybe later today.', sender: 'me', name: 'You', time: '10:05 AM' },
-  { id: 7, text: 'I’ll be online till evening. Ping me anytime.', sender: 'alex', name: 'Alex', time: '10:06 AM' },
-  { id: 8, text: 'Same here 💪', sender: 'mike', name: 'Mike', time: '10:07 AM' },
+  {
+    id: 1,
+    text: 'Hey everyone 👋',
+    sender: 'me',
+    name: 'You',
+    time: '10:00 AM',
+  },
+  {
+    id: 2,
+    text: 'Hi Dinesh! How’s the new feature going?',
+    sender: 'sarah',
+    name: 'Sarah',
+    time: '10:01 AM',
+  },
+  {
+    id: 3,
+    text: 'Morning folks ☀️',
+    sender: 'mike',
+    name: 'Mike',
+    time: '10:02 AM',
+  },
+  {
+    id: 4,
+    text: 'Hey Mike! Just fixing some bugs 😅',
+    sender: 'me',
+    name: 'You',
+    time: '10:03 AM',
+  },
+  {
+    id: 5,
+    text: 'Cool. Need any help with the backend?',
+    sender: 'alex',
+    name: 'Alex',
+    time: '10:04 AM',
+  },
+  {
+    id: 6,
+    text: 'Actually yes, maybe later today.',
+    sender: 'me',
+    name: 'You',
+    time: '10:05 AM',
+  },
+  {
+    id: 7,
+    text: 'I’ll be online till evening. Ping me anytime.',
+    sender: 'alex',
+    name: 'Alex',
+    time: '10:06 AM',
+  },
+  {
+    id: 8,
+    text: 'Same here 💪',
+    sender: 'mike',
+    name: 'Mike',
+    time: '10:07 AM',
+  },
 ];
 
 export function ChatWindow() {
@@ -49,8 +97,7 @@ export function ChatWindow() {
           transition-colors
           duration-300
           custom-scroll
-        "
-      >
+        ">
         <div className="flex flex-col space-y-4 pb-2">
           {loading ? (
             [...Array(6)].map((_, i) => (
@@ -71,8 +118,7 @@ export function ChatWindow() {
                       initial={{ opacity: 0, y: 10, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.25, delay: msg.id * 0.05 }}
-                    >
+                      transition={{ duration: 0.25, delay: msg.id * 0.05 }}>
                       <MessageItem {...msg} />
                     </motion.div>
                   ))}
@@ -81,8 +127,7 @@ export function ChatWindow() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                    transition={{ delay: 0.2 }}>
                     <TypingIndicator name="Sarah" />
                   </motion.div>
                 </>
@@ -91,8 +136,7 @@ export function ChatWindow() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="text-center text-sm text-muted-foreground mt-4"
-                >
+                  className="text-center text-sm text-muted-foreground mt-4">
                   No messages yet. Be the first to say something!
                 </motion.div>
               )}

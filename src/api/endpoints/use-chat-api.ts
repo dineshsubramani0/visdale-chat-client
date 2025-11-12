@@ -1,4 +1,8 @@
-import type { ChatListResponse, CreateGroupResponse, UserListResponse } from '@/@types/chat/chat.interface';
+import type {
+  ChatListResponse,
+  CreateGroupResponse,
+  UserListResponse,
+} from '@/@types/chat/chat.interface';
 import { useApi } from '@/hooks/use-api';
 
 export const useChatApi = () => {
@@ -23,15 +27,35 @@ export const useChatApi = () => {
 
     /** Get single chat room details */
     getRoom: async (roomId: string): Promise<CreateGroupResponse | null> => {
-      return fetchData<CreateGroupResponse>(`${BASE_URL}/rooms/${roomId}`, 'GET');
+      return fetchData<CreateGroupResponse>(
+        `${BASE_URL}/rooms/${roomId}`,
+        'GET'
+      );
     },
 
-    listUser: async (): Promise<UserListResponse| null> => {
+    /** List all users */
+    listUser: async (): Promise<UserListResponse | null> => {
       return fetchData<UserListResponse>(
         `${BASE_URL}/rooms/user/list`,
         'GET',
         ''
       );
+    },
+
+    /** Add participants to existing room */
+    addParticipants: async (
+      roomId: string,
+      userIds: string[]
+    ): Promise<CreateGroupResponse> => {
+      const response = await fetchData<CreateGroupResponse | null>(
+        `${BASE_URL}/rooms/${roomId}/add-participants`,
+        'POST',
+        '',
+        { userIds }
+      );
+
+      if (!response) throw new Error('Failed to add participants'); // ensures we never return null
+      return response;
     },
   };
 };

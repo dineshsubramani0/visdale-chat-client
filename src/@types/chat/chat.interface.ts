@@ -15,9 +15,9 @@ export interface ChatParticipant {
 export interface ChatRoom {
   id: string;
   isGroup: boolean;
-  name: string; 
+  name: string;
   lastMessage?: string;
-  groupName?: string; 
+  groupName?: string;
   unread: number;
   participants?: ChatParticipant[];
 }

@@ -17,6 +17,7 @@ import type {
 } from '@/@types/auth/login.interface';
 import type { UserProfile } from '@/@types/auth/user.inferface';
 import { logout } from '@/lib/logout';
+import { useNavigate } from 'react-router-dom';
 
 export const useAuth = () => {
   const {
@@ -27,7 +28,7 @@ export const useAuth = () => {
     me,
     logout: serviceLogout,
   } = useAuthApi();
-
+   const navigate = useNavigate();
   // -------------------- Request OTP --------------------
   const requestOtpMutation = useMutation<
     BaseApiResponse<RequestOtpResponse>,
@@ -96,13 +97,27 @@ export const useAuth = () => {
   });
 
   // -------------------- Logout --------------------
+
   const logoutMutation = useMutation({
     mutationKey: ['auth_logout'],
     mutationFn: async () => {
       const response = await serviceLogout();
       if (!response) throw new Error('No response from API');
-      logout();
+
+      // Clear localStorage / cookies
+      localStorage.removeItem('_ud');
+      localStorage.removeItem('access_token');
+
+      // Optional: call your auth logout util if exists
+      logout?.();
+
       return response;
+    },
+    onSuccess: () => {
+      navigate('/login');
+    },
+    onError: (error) => {
+      console.error(error);
     },
   });
 

@@ -1,14 +1,15 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useChatApi } from '../endpoints/use-chat-api';
 import type {
   ChatListResponse,
   CreateGroupResponse,
-  User,
   UserListResponse,
 } from '@/@types/chat/chat.interface';
 
 export const useChat = () => {
-  const { listRooms, createRoom, getRoom, listUser } = useChatApi();
+  const { listRooms, createRoom, getRoom, listUser, addParticipants } =
+    useChatApi();
+  const queryClient = useQueryClient();
 
   /** Fetch all rooms */
   const roomsQuery = useQuery<ChatListResponse>({
@@ -32,6 +33,9 @@ export const useChat = () => {
         groupName: data.groupName,
         participants: data.participants,
       }) as Promise<CreateGroupResponse>,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat_rooms'] });
+    },
   });
 
   /** Fetch a single room by ID */
@@ -44,7 +48,7 @@ export const useChat = () => {
         if (!response) throw new Error('Room not found');
         return response;
       },
-      enabled: !!roomId, // run only if roomId exists
+      enabled: !!roomId,
     });
 
   /** Fetch all users */
@@ -52,10 +56,29 @@ export const useChat = () => {
     queryKey: ['users_list'],
     queryFn: async () => {
       const response = await listUser();
-      if (!response) throw new Error('Failed to fetch rooms');
+      if (!response) throw new Error('Failed to fetch users');
       return response;
     },
   });
 
-  return { roomsQuery, createGroupMutation, useRoomQuery, userQuery };
+  /** Add participants to an existing room */
+  const addParticipantsMutation = useMutation<
+    CreateGroupResponse,
+    unknown,
+    { roomId: string; userIds: string[] }
+  >({
+    mutationFn: ({ roomId, userIds }) => addParticipants(roomId, userIds),
+    onSuccess: (_, { roomId }) => {
+      queryClient.invalidateQueries({ queryKey: ['users_list'] });
+      queryClient.invalidateQueries({ queryKey: ['chat_room', roomId] });
+    },
+  });
+
+  return {
+    roomsQuery,
+    createGroupMutation,
+    useRoomQuery,
+    userQuery,
+    addParticipantsMutation,
+  };
 };
