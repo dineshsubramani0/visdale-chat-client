@@ -75,6 +75,21 @@ export const useSocket = (user: UserProfile | null, chatId?: string) => {
     };
     s.on('online:users', onlineHandler);
 
+     /** Handle participants added */
+    const participantsAddedHandler = (data: {
+      roomId: string;
+      addedUserIds: string[];
+      addedBy: string;
+      participants: { id: string; name: string }[];
+    }) => {
+      console.log('[Socket] Participants added:', data);
+      if (data.roomId) {
+         queryClient.invalidateQueries({ queryKey: ['chat_rooms'] })
+      }
+    };
+
+    s.on('participantsAdded', participantsAddedHandler);
+
     /** Typing listener */
     const typingHandler = ({ chatId, userName }: { chatId: string; userName: string }) => {
       if (userName === user.id) return; // Ignore self typing
@@ -144,8 +159,6 @@ export const useSocket = (user: UserProfile | null, chatId?: string) => {
       }
     };
 
-
-
     s.on('newMessage', messageHandler);
 
     /** Cleanup listeners on unmount */
@@ -169,5 +182,9 @@ export const useSocket = (user: UserProfile | null, chatId?: string) => {
     getSocket()?.emit('typing', { chatId });
   };
 
-  return { onlineUsers, typingUsers, sendMessage, sendTyping };
+  const emitAddParticipants = (roomId: string, userIds: string[]) => {
+    getSocket()?.emit('addParticipants', { roomId, userIds });
+  };
+
+  return { onlineUsers, typingUsers, sendMessage, sendTyping, emitAddParticipants };
 };

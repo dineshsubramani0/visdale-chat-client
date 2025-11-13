@@ -7,6 +7,7 @@ import type {
   MessageResponse,
   MessageListResponse,
   SendMessageRequest,
+  MessageList,
 } from '@/@types/chat/chat.interface';
 
 
@@ -100,14 +101,9 @@ export const useChat = () => {
       },
       initialPageParam: 0,
         getNextPageParam: (lastPage, allPages) => {
-        // Check the 'lastPage' flag from the *server response*.
-        // If true, it means we have reached the beginning of the chat history.
-        if (lastPage.lastPage) {
+        if ((lastPage as unknown as MessageList['pages'][0]).lastPage) {
           return undefined; // Stop loading
         }
-
-        // Calculate the next offset based on the total number of pages loaded so far
-        // allPages.length gives us the count of already loaded pages (e.g., 1, 2, 3...)
         const nextOffset = allPages.length * limit;
         return nextOffset;
       },

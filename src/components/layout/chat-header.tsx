@@ -17,6 +17,8 @@ import { useChat } from '@/api/hooks/use-chat';
 import type { CreateGroupResponse } from '@/@types/chat/chat.interface';
 import BallTriangleSpinner from '../common/spinners/ball-triangle.spinner';
 import { ParticipantsModal } from './participants-modal';
+import { useSocket } from '@/hooks/use-socket';
+import type { UserProfile } from '@/@types/auth/user.inferface';
 
 type Participant = {
   id: string;
@@ -29,21 +31,21 @@ export function ChatHeader({
   onOpenSidebar,
   roomData,
   roomLoading,
-  currentUserId,
+  currentUser,
 }: Readonly<{
   onOpenSidebar?: () => void;
   roomData: CreateGroupResponse | undefined | null;
   roomLoading?: boolean;
-  currentUserId: string;
+  currentUser: UserProfile | null;
 }>) {
   const { userQuery, addParticipantsMutation } = useChat();
   const { data: users, isLoading: usersLoading, refetch } = userQuery;
   const usersData = users?.data;
   const room = roomData?.data;
-
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { emitAddParticipants } = useSocket(currentUser, room?.id);
 
   /** Refetch users whenever the dialog opens */
   useEffect(() => {
@@ -56,9 +58,9 @@ export function ChatHeader({
   const isAdmin = useMemo(() => {
     if (!room?.participants) return false;
     return room.participants.some(
-      (p) => p.user.id === currentUserId && p.isAdmin
+      (p) => p.user.id === currentUser?.id && p.isAdmin
     );
-  }, [room?.participants, currentUserId]);
+  }, [room?.participants, currentUser?.id]);
 
   /** Available users to add */
   const availableUsers: Participant[] = useMemo(() => {
@@ -101,6 +103,9 @@ export function ChatHeader({
         roomId: room.id,
         userIds: usersToAdd.map((u) => u.id),
       });
+
+      emitAddParticipants(room.id, usersToAdd.map((u) => u.id));
+
       setSelectedUsers([]);
       setSearch('');
       setIsDialogOpen(false);

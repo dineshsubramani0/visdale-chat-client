@@ -69,7 +69,7 @@ export default function MainLayout() {
         {/* Header — hide if invalid chat */}
         {isValidChat && (
           <ChatHeader
-            currentUserId={_ud?.id as string}
+            currentUser={_ud}
             roomData={roomData}
             roomLoading={roomLoading}
             onOpenSidebar={() => setSidebarOpen(true)}
