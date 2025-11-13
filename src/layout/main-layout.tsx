@@ -8,16 +8,14 @@ import { useChat } from '@/api/hooks/use-chat';
 import { SessionStorageUtils } from '@/lib/session-storage-utils';
 import type { UserProfile } from '@/@types/auth/user.inferface';
 import { decrypt } from '@/lib/encryption';
+import { Button } from '@/components/ui/button';
+import { IconMenu } from '@tabler/icons-react';
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const chatId = useChatId()!;
   const { useRoomQuery } = useChat();
-  const {
-    data: roomData,
-    isLoading: roomLoading,
-    isError,
-  } = useRoomQuery(chatId);
+  const { data: roomData, isLoading: roomLoading, isError } = useRoomQuery(chatId);
   const storedValue = SessionStorageUtils.getItem('_ud');
 
   let _ud: UserProfile | null = null;
@@ -30,7 +28,7 @@ export default function MainLayout() {
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
-      {/* Sidebar */}
+      {/* Sidebar for desktop */}
       <div className="hidden md:flex">
         <ChatSidebar currentUser={_ud} />
       </div>
@@ -39,7 +37,8 @@ export default function MainLayout() {
       <div
         className={`fixed inset-0 z-50 md:hidden flex transition-all duration-300 ${
           sidebarOpen ? 'visible opacity-100' : 'invisible opacity-0'
-        }`}>
+        }`}
+      >
         <button
           type="button"
           aria-label="Close sidebar"
@@ -47,15 +46,26 @@ export default function MainLayout() {
           onClick={() => setSidebarOpen(false)}
         />
         <div className="relative w-80 h-full bg-background shadow-lg">
-          <ChatSidebar
-            currentUser={_ud}
-            onClose={() => setSidebarOpen(false)}
-          />
+          <ChatSidebar currentUser={_ud} onClose={() => setSidebarOpen(false)} />
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 border-l border-border bg-background/80 backdrop-blur-sm transition-all">
+        {/* Mobile Hamburger when no chat */}
+        {!isValidChat && (
+          <div className="flex md:hidden items-center justify-start p-3 border-b border-border">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <IconMenu size={20} />
+            </Button>
+            <span className="ml-2 text-sm font-medium">Select a chat</span>
+          </div>
+        )}
+
         {/* Header — hide if invalid chat */}
         {isValidChat && (
           <ChatHeader

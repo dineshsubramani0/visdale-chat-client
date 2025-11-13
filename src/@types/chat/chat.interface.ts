@@ -61,3 +61,14 @@ export interface MessageListResponse {
   data: MessageResponse[];
   time_stamp: string;
 }
+
+export interface MessageList {
+  pages: {
+    currentPage: number;
+    lastPage: boolean;
+    totalPages: number;
+    messages: MessageResponse[];
+  }[];
+  pageParams: number[];
+}
+

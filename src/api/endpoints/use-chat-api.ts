@@ -63,7 +63,6 @@ export const useChatApi = () => {
         '',
         { ...data }
       );
-      console.log('Send Message Response:', { ...data });
       if (!response) throw new Error('Failed to send message');
       return response;
     },

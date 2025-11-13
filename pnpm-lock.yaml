@@ -83,6 +83,12 @@ importers:
       react-hook-form:
         specifier: ^7.66.0
         version: 7.66.0(react@19.2.0)
+      react-infinite-scroll-hook:
+        specifier: ^6.0.1
+        version: 6.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-intersection-observer:
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-loader-spinner:
         specifier: ^8.0.0
         version: 8.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -2360,6 +2366,27 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-infinite-scroll-hook@6.0.1:
+    resolution: {integrity: sha512-5FtJnor4Zyd3uafHCzOlXFCuhFJ2ZzLm3d9XTKbvAN6A/SH+XNFo5IOFk/T1hV5AYy+vOZYoXeH4jkufFB2JVA==}
+    peerDependencies:
+      react: '>=19'
+      react-dom: '>=19'
+
+  react-intersection-observer-hook@4.0.1:
+    resolution: {integrity: sha512-iAic1y/ne0hHjtll6XFFGaq0CWNtukYOA3NXef5yT8TdsA8KdQJ8Ey5CcVWzXKIE9IOU+K9Z40+LXDqBPBdCqw==}
+    peerDependencies:
+      react: '>=19'
+      react-dom: '>=19'
+
+  react-intersection-observer@10.0.0:
+    resolution: {integrity: sha512-JJRgcnFQoVXmbE5+GXr1OS1NDD1gHk0HyfpLcRf0575IbJz+io8yzs4mWVlfaqOQq1FiVjLvuYAdEEcrrCfveg==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5034,6 +5061,23 @@ snapshots:
   react-hook-form@7.66.0(react@19.2.0):
     dependencies:
       react: 19.2.0
+
+  react-infinite-scroll-hook@6.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+      react-intersection-observer-hook: 4.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+
+  react-intersection-observer-hook@4.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+
+  react-intersection-observer@10.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+    optionalDependencies:
+      react-dom: 19.2.0(react@19.2.0)
 
   react-is@16.13.1: {}
 

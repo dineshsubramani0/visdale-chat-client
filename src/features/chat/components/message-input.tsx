@@ -17,7 +17,6 @@ export function MessageInput({ roomId, onSend, onTyping }: Readonly<MessageInput
     if (!message.trim() && files.length === 0) return;
 
     const image = files[0] ? URL.createObjectURL(files[0]) : undefined;
-    console.log('[MessageInput] Sending message:', message, image);
     onSend(roomId, message, image);
 
     setMessage('');
@@ -25,7 +24,6 @@ export function MessageInput({ roomId, onSend, onTyping }: Readonly<MessageInput
   };
 
   const handleTyping = () => {
-    console.log('[MessageInput] Typing in room:', roomId);
     onTyping(roomId);
   };
 
@@ -40,7 +38,6 @@ export function MessageInput({ roomId, onSend, onTyping }: Readonly<MessageInput
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     setFiles([...files, ...Array.from(e.target.files)]);
-    console.log('[MessageInput] Files selected:', e.target.files);
   };
 
   return (

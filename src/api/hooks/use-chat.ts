@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useChatApi } from '../endpoints/use-chat-api';
 import type {
   ChatListResponse,
@@ -8,6 +8,7 @@ import type {
   MessageListResponse,
   SendMessageRequest,
 } from '@/@types/chat/chat.interface';
+
 
 export const useChat = () => {
   const {
@@ -83,18 +84,41 @@ export const useChat = () => {
     },
   });
 
-  /** Fetch messages for a room */
-  const useMessagesQuery = (roomId?: string, limit?: number, offset?: number) =>
-    useQuery<MessageListResponse | null>({
-      queryKey: ['chat_messages', roomId, limit, offset],
-      queryFn: async () => {
-        if (!roomId) return null;
-        const messages = await getMessages(roomId, limit, offset);
-        return messages;
+  /** Infinite messages query */
+  const useMessagesInfiniteQuery = (roomId?: string, limit = 10) =>
+    useInfiniteQuery<
+      MessageResponse[], // TQueryFnData: query function return type
+      Error,             // TError
+      MessageResponse[]  // TData: cache type
+    >({
+      queryKey: ['chat_messages', roomId, limit],
+      queryFn: async (context) => {
+        const pageParam = (context.pageParam as number) ?? 1; 
+        if (!roomId) return [];
+        const res = await getMessages(roomId, limit, pageParam);
+        return res?.data ?? [];
+      },
+      initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages) => {
+        // Check the 'lastPage' flag from the *server response*.
+        // If true, it means we have reached the beginning of the chat history.
+        if (lastPage.lastPage) {
+          return undefined; // Stop loading
+        }
+
+        // Calculate the next offset based on the total number of pages loaded so far
+        // allPages.length gives us the count of already loaded pages (e.g., 1, 2, 3...)
+        const nextOffset = allPages.length * limit;
+        return nextOffset;
       },
       enabled: !!roomId,
+      placeholderData: keepPreviousData,
+      refetchOnReconnect: false,
+      staleTime: 0,
     });
 
+
+  /** Send message mutation */
   const sendMessageMutation = useMutation<
     MessageResponse,
     unknown,
@@ -111,13 +135,28 @@ export const useChat = () => {
       queryClient.setQueryData<MessageListResponse>(
         ['chat_messages', variables.chatId],
         (old) => {
-          if (!old)
+          const now = new Date().toISOString();
+
+          if (!old) {
             return {
               status_code: 200,
               data: [newMessage],
-              time_stamp: new Date().toISOString(),
-            };
-          return { ...old, data: [...old.data, newMessage] };
+              messages: [newMessage],
+              time_stamp: now,
+              currentPage: 1,
+              lastPage: true,
+              totalPages: 1,
+            } as unknown as MessageListResponse;
+          }
+
+          const updatedData = [...old.data, newMessage];
+          const updatedMessages = [...old.data, newMessage];
+
+          return {
+            ...old,
+            data: updatedData,
+            messages: updatedMessages,
+          };
         }
       );
 
@@ -131,7 +170,7 @@ export const useChat = () => {
     useRoomQuery,
     userQuery,
     addParticipantsMutation,
-    useMessagesQuery,
+    useMessagesInfiniteQuery, // <-- infinite scroll
     sendMessageMutation,
   };
 };

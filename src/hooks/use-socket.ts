@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAppDispatch, useAppSelector } from './use-typed-redux';
 import { setOnlineUsers, setTypingUser } from '@/store/features/socket/socket.slice';
 import { useQueryClient } from '@tanstack/react-query';
-import type { MessageListResponse, MessageResponse } from '@/@types/chat/chat.interface';
+import type { MessageList, MessageResponse } from '@/@types/chat/chat.interface';
 import type { UserProfile } from '@/@types/auth/user.inferface';
 
 const BASE_URL = import.meta.env.VITE_CHAT_API_URL;
@@ -88,23 +88,43 @@ export const useSocket = (user: UserProfile | null, chatId?: string) => {
     const updateQueryData = (
       queryKey: readonly unknown[],
       message: MessageResponse
-    ): MessageListResponse => {
-      const old = queryClient.getQueryData<MessageListResponse>(queryKey);
+    ): MessageList => {
+      const old = queryClient.getQueryData<MessageList>(queryKey);
 
+      console.log('[Socket] Updating query data for', old);
+
+      // If no previous data, create the initial structure
       if (!old) {
         return {
-          status_code: 200,
-          data: [message],
-          time_stamp: new Date().toISOString(),
+          pages: [
+            {
+              currentPage: 1,
+              lastPage: true,
+              totalPages: 1,
+              messages: [message],
+            },
+          ],
+          pageParams: [1],
         };
       }
 
-      // Use some instead of find
-      const exists = old.data.some((m) => m.id === message.id);
+      // Check if the message already exists in the first page
+      const exists = old.pages[0]?.messages.some((m) => m.id === message.id);
       if (exists) return old;
 
-      return { ...old, data: [...old.data, message] };
+      // Add new message to the start or end of first page (depending on your order preference)
+      return {
+        ...old,
+        pages: [
+          {
+            ...old.pages[0],
+            messages: [...old.pages[0].messages, message],
+          },
+          ...old.pages.slice(1),
+        ],
+      };
     };
+
 
     const messageHandler = (message: MessageResponse) => {
       console.log('[Socket] New message received:', message);
@@ -120,7 +140,7 @@ export const useSocket = (user: UserProfile | null, chatId?: string) => {
         if (roomId !== message.chatId) continue;
 
         const newData = updateQueryData(queryKey, message);
-        queryClient.setQueryData<MessageListResponse>(queryKey, newData);
+        queryClient.setQueryData<MessageList>(queryKey, newData);
       }
     };
 

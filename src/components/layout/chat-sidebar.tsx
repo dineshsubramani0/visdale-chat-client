@@ -50,9 +50,10 @@ export function ChatSidebar({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups] = useState<ChatRoom[]>([]);
-  const [roomsLoading, setRoomsLoading] = useState(true);
+
 
   const roomsQueryData = roomsQuery.data?.data;
+  const roomsLoading = roomsQuery.isLoading;
 
   const defaultUsers: ChatRoom[] = [
     {
@@ -66,11 +67,6 @@ export function ChatSidebar({
   ];
 
   const [users] = useState(defaultUsers);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setRoomsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (chatId) {
