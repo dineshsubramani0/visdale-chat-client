@@ -53,33 +53,37 @@ client.interceptors.request.use(
       if (!isRefreshing) {
         isRefreshing = true;
         try {
-          const response = await axios.post(
-            '/auth/refresh',
-            {},
-            {
-              withCredentials: true,
-              baseURL: import.meta.env.VITE_AUTH_API_URL,
+            const response = await axios.post(
+              '/auth/refresh',
+              {},
+              {
+                withCredentials: true,
+                baseURL: import.meta.env.VITE_AUTH_API_URL,
+              }
+            );
+  
+            const newToken = response.data?.access_token;
+            if (newToken) {
+              sessionStorage.setItem('access_token', newToken);
+              token = newToken;
+              onRefreshed(newToken);
+            } else {
+              sessionStorage.removeItem('access_token');
+              token = null;
+              onRefreshed('');
             }
-          );
-
-          const newToken = response.data?.access_token;
-          if (newToken) {
-            sessionStorage.setItem('access_token', newToken);
-            token = newToken;
-            onRefreshed(newToken);
-          } else {
-            sessionStorage.removeItem('access_token');
+          } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+              sessionStorage.removeItem('access_token');
+              sessionStorage.removeItem('_ud');
+              globalThis.location.href = '/login';
+            }
             token = null;
             onRefreshed('');
+            console.log(error);
+          } finally {
+            isRefreshing = false;
           }
-        } catch (error) {
-          sessionStorage.removeItem('access_token');
-          token = null;
-          onRefreshed('');
-          console.log(error);
-        } finally {
-          isRefreshing = false;
-        }
       } else {
         // Wait for ongoing refresh to finish
         token = await new Promise<string>((resolve) =>
