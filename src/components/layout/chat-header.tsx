@@ -12,15 +12,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  IconMenu,
-  IconUser,
-  IconPlus,
-  IconDots,
-  IconInfoCircle,
-  IconPhone,
-  IconVideo,
-} from '@tabler/icons-react';
+import { IconMenu, IconUser, IconPlus } from '@tabler/icons-react';
 import { useChat } from '@/api/hooks/use-chat';
 import type { CreateGroupResponse } from '@/@types/chat/chat.interface';
 import BallTriangleSpinner from '../common/spinners/ball-triangle.spinner';
@@ -63,7 +55,9 @@ export function ChatHeader({
   /** Check if current user is admin */
   const isAdmin = useMemo(() => {
     if (!room?.participants) return false;
-    return room.participants.some((p) => p.user.id === currentUserId && p.isAdmin);
+    return room.participants.some(
+      (p) => p.user.id === currentUserId && p.isAdmin
+    );
   }, [room?.participants, currentUserId]);
 
   /** Available users to add */
@@ -98,7 +92,9 @@ export function ChatHeader({
   const handleAddParticipants = async () => {
     if (!room || selectedUsers.length === 0) return;
 
-    const usersToAdd = availableUsers.filter((u) => selectedUsers.includes(u.id));
+    const usersToAdd = availableUsers.filter((u) =>
+      selectedUsers.includes(u.id)
+    );
 
     try {
       await addParticipantsMutation.mutateAsync({
@@ -123,8 +119,7 @@ export function ChatHeader({
           size="icon"
           variant="ghost"
           className="md:hidden mr-2"
-          onClick={onOpenSidebar}
-        >
+          onClick={onOpenSidebar}>
           <IconMenu size={20} />
         </Button>
       )}
@@ -149,10 +144,13 @@ export function ChatHeader({
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold truncate">{room?.groupName || 'Chat'}</p>
+              <p className="text-sm font-semibold truncate">
+                {room?.groupName || 'Chat'}
+              </p>
               {room?.isGroup && participantCount > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {participantCount} participant{participantCount !== 1 ? 's' : ''}
+                  {participantCount} participant
+                  {participantCount !== 1 ? 's' : ''}
                 </p>
               )}
             </>
@@ -171,9 +169,8 @@ export function ChatHeader({
                   size="icon"
                   variant="outline"
                   title="Add Participant"
-                  className='cursor-pointer'
-                  onClick={() => setIsDialogOpen(true)}
-                >
+                  className="cursor-pointer"
+                  onClick={() => setIsDialogOpen(true)}>
                   <IconPlus size={16} />
                 </Button>
               </DialogTrigger>
@@ -203,8 +200,7 @@ export function ChatHeader({
                     filteredUsers.map((user) => (
                       <label
                         key={user.id}
-                        className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 cursor-pointer transition"
-                      >
+                        className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 cursor-pointer transition">
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
@@ -214,11 +210,15 @@ export function ChatHeader({
                           />
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.image} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>
+                              {user.name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col text-sm">
                             <span>{user.name}</span>
-                            <span className="text-[10px] text-green-500">online</span>
+                            <span className="text-[10px] text-green-500">
+                              online
+                            </span>
                           </div>
                         </div>
                       </label>
@@ -228,15 +228,17 @@ export function ChatHeader({
 
                 <DialogFooter className="mt-3 flex justify-end gap-2">
                   <DialogClose asChild>
-                    <Button
-                      className='cursor-pointer'
-                      variant="outline">Cancel</Button>
+                    <Button className="cursor-pointer" variant="outline">
+                      Cancel
+                    </Button>
                   </DialogClose>
                   <Button
-                    className='cursor-pointer'
+                    className="cursor-pointer"
                     onClick={handleAddParticipants}
-                    disabled={selectedUsers.length === 0 || addParticipantsMutation.isPending}
-                  >
+                    disabled={
+                      selectedUsers.length === 0 ||
+                      addParticipantsMutation.isPending
+                    }>
                     {addParticipantsMutation.isPending ? 'Adding...' : 'Add'}
                   </Button>
                 </DialogFooter>
@@ -246,20 +248,6 @@ export function ChatHeader({
 
           {/* View Participants */}
           <ParticipantsModal roomData={roomData} />
-
-          {/* Other actions */}
-          <Button size="icon" variant="ghost">
-            <IconPhone size={18} />
-          </Button>
-          <Button size="icon" variant="ghost">
-            <IconVideo size={18} />
-          </Button>
-          <Button size="icon" variant="ghost">
-            <IconInfoCircle size={18} />
-          </Button>
-          <Button size="icon" variant="ghost">
-            <IconDots size={18} />
-          </Button>
         </div>
       )}
     </header>

@@ -1,9 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { SOCKET_SLICE_NAME } from './socket.constant';
 
 interface SocketState {
   onlineUsers: string[];
-  typingUsers: Record<string, string>;
+  typingUsers: Record<string, string | null>; // chatId -> userName
 }
 
 const initialState: SocketState = {
@@ -11,17 +10,17 @@ const initialState: SocketState = {
   typingUsers: {},
 };
 
-const socketSlice = createSlice({
-  name: SOCKET_SLICE_NAME,
+export const socketSlice = createSlice({
+  name: 'socket',
   initialState,
   reducers: {
-    setOnlineUsers(state, action: PayloadAction<string[]>) {
+    setOnlineUsers: (state, action: PayloadAction<string[]>) => {
       state.onlineUsers = action.payload;
     },
-    setTypingUser(
+    setTypingUser: (
       state,
       action: PayloadAction<{ chatId: string; userName: string | null }>
-    ) {
+    ) => {
       const { chatId, userName } = action.payload;
       if (userName) state.typingUsers[chatId] = userName;
       else delete state.typingUsers[chatId];

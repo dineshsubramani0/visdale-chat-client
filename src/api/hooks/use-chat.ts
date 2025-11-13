@@ -10,8 +10,15 @@ import type {
 } from '@/@types/chat/chat.interface';
 
 export const useChat = () => {
-  const { listRooms, createRoom, getRoom, listUser, addParticipants, getMessages, sendMessage } =
-    useChatApi();
+  const {
+    listRooms,
+    createRoom,
+    getRoom,
+    listUser,
+    addParticipants,
+    getMessages,
+    sendMessage,
+  } = useChatApi();
   const queryClient = useQueryClient();
 
   /** Fetch all rooms */
@@ -31,8 +38,13 @@ export const useChat = () => {
     { groupName: string; participants: string[] }
   >({
     mutationFn: (data) =>
-      createRoom({ isGroup: true, groupName: data.groupName, participants: data.participants }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chat_rooms'] }),
+      createRoom({
+        isGroup: true,
+        groupName: data.groupName,
+        participants: data.participants,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['chat_rooms'] }),
   });
 
   /** Fetch a single room by ID */
@@ -83,7 +95,6 @@ export const useChat = () => {
       enabled: !!roomId,
     });
 
-
   const sendMessageMutation = useMutation<
     MessageResponse,
     unknown,
@@ -91,7 +102,8 @@ export const useChat = () => {
   >({
     mutationFn: async (data) => {
       const response = await sendMessage(data.chatId, data);
-      if (!response || !response.data.length) throw new Error('Failed to send message');
+      if (!response || !response.data.length)
+        throw new Error('Failed to send message');
       return response.data[0];
     },
     onSuccess: (newMessage, variables) => {
@@ -99,7 +111,12 @@ export const useChat = () => {
       queryClient.setQueryData<MessageListResponse>(
         ['chat_messages', variables.chatId],
         (old) => {
-          if (!old) return { status_code: 200, data: [newMessage], time_stamp: new Date().toISOString() };
+          if (!old)
+            return {
+              status_code: 200,
+              data: [newMessage],
+              time_stamp: new Date().toISOString(),
+            };
           return { ...old, data: [...old.data, newMessage] };
         }
       );
@@ -107,7 +124,6 @@ export const useChat = () => {
       queryClient.invalidateQueries({ queryKey: ['chat_rooms'] });
     },
   });
-
 
   return {
     roomsQuery,

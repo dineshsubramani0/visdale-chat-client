@@ -54,9 +54,6 @@ export function ChatSidebar({
 
   const roomsQueryData = roomsQuery.data?.data;
 
-  console.log(roomsQueryData);
-
-
   const defaultUsers: ChatRoom[] = [
     {
       id: currentUser?.id ?? 'default-user',
@@ -160,22 +157,22 @@ export function ChatSidebar({
         activeId === (room.id || `room-${index}`)
           ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
           : 'hover:bg-muted/60 focus:ring-1 focus:ring-primary/30'
-      )}
-    >
+      )}>
       <Avatar className="h-9 w-9">
-        <AvatarImage
-          src={room.id ? `/avatars/${room.id}.jpg` : undefined}
-        />
+        <AvatarImage src={room.id ? `/avatars/${room.id}.jpg` : undefined} />
         <AvatarFallback>{room.name?.charAt(0) || '?'}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{room.name}</p>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="text-sm font-medium truncate">
+          {room.name}
+        </p>
+        <p className="text-xs text-muted-foreground truncate max-w-[40%]">
           {typeof room.lastMessage === 'string'
             ? room.lastMessage
             : room.lastMessage?.content || ''}
         </p>
       </div>
+
       {room?.unread > 0 && (
         <span className="min-h-[18px] min-w-[18px] text-[10px] flex items-center justify-center bg-primary text-primary-foreground rounded-full animate-pulse">
           {room.unread}
@@ -203,8 +200,7 @@ export function ChatSidebar({
         <button
           aria-label="Close sidebar"
           className="md:hidden hover:bg-muted p-1 rounded-lg transition"
-          onClick={onClose}
-        >
+          onClick={onClose}>
           <IconX size={18} />
         </button>
       </div>
@@ -245,14 +241,12 @@ export function ChatSidebar({
                   onOpenChange={(open) => {
                     setGroupName('');
                     setIsDialogOpen(open);
-                  }}
-                >
+                  }}>
                   <DialogTrigger asChild>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-muted-foreground cursor-pointer hover:text-primary hover:bg-primary/10"
-                    >
+                      className="text-muted-foreground cursor-pointer hover:text-primary hover:bg-primary/10">
                       <IconPlus size={14} />
                     </Button>
                   </DialogTrigger>
@@ -274,8 +268,7 @@ export function ChatSidebar({
                         onClick={handleCreateGroup}
                         disabled={
                           !groupName.trim() || createGroupMutation.isPending
-                        }
-                      >
+                        }>
                         <IconUsers size={16} className="mr-1" /> Create Room
                       </Button>
                     </DialogFooter>
@@ -315,8 +308,7 @@ export function ChatSidebar({
             title="Logout"
             aria-label="Logout"
             className="p-1.5 cursor-pointer rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
-            onClick={handleLogout}
-          >
+            onClick={handleLogout}>
             <IconLogout size={16} />
           </button>
         </div>

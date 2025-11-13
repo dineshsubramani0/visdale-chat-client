@@ -17,7 +17,9 @@ interface ParticipantsModalProps {
   roomData: CreateGroupResponse | undefined | null;
 }
 
-export function ParticipantsModal({ roomData }: Readonly<ParticipantsModalProps>) {
+export function ParticipantsModal({
+  roomData,
+}: Readonly<ParticipantsModalProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -35,7 +37,11 @@ export function ParticipantsModal({ roomData }: Readonly<ParticipantsModalProps>
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className='cursor-pointer' size="icon" variant="outline" title="View Participants">
+        <Button
+          className="cursor-pointer"
+          size="icon"
+          variant="outline"
+          title="View Participants">
           👥
         </Button>
       </DialogTrigger>
@@ -63,23 +69,26 @@ export function ParticipantsModal({ roomData }: Readonly<ParticipantsModalProps>
             filteredParticipants.map((p) => (
               <div
                 key={p.user.id}
-                className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 transition"
-              >
+                className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted/20 transition">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={'/avatars/default.jpg'} />
-                    <AvatarFallback>{p.user.first_name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                      {p.user.first_name.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col text-sm">
-                    <span>{p.user.first_name} {p.user.last_name}</span>
+                    <span>
+                      {p.user.first_name} {p.user.last_name}
+                    </span>
                     {p.isAdmin && (
-                      <span className="text-xs text-orange-500 font-semibold">Admin</span>
+                      <span className="text-xs text-orange-500 font-semibold">
+                        Admin
+                      </span>
                     )}
                   </div>
                 </div>
-                <span
-                  className={`text-[10px] ${ 'text-green-500' }`}
-                >
+                <span className={`text-[10px] ${'text-green-500'}`}>
                   {'online'}
                 </span>
               </div>
@@ -89,7 +98,9 @@ export function ParticipantsModal({ roomData }: Readonly<ParticipantsModalProps>
 
         <DialogFooter className="mt-3 flex justify-end">
           <DialogClose asChild>
-            <Button className='cursor-pointer' variant="outline">Close</Button>
+            <Button className="cursor-pointer" variant="outline">
+              Close
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

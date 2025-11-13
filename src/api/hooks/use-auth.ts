@@ -28,7 +28,7 @@ export const useAuth = () => {
     me,
     logout: serviceLogout,
   } = useAuthApi();
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   // -------------------- Request OTP --------------------
   const requestOtpMutation = useMutation<
     BaseApiResponse<RequestOtpResponse>,

@@ -2,35 +2,45 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send, Paperclip, Smile } from 'lucide-react';
 import { useState } from 'react';
-import { useChat } from '@/api/hooks/use-chat';
-import type { SendMessageRequest } from '@/@types/chat/chat.interface';
 
 interface MessageInputProps {
   roomId: string;
+  onSend: (roomId: string, content: string, image?: string) => void;
+  onTyping: (roomId: string) => void;
 }
 
-export function MessageInput({ roomId }: Readonly<MessageInputProps>) {
+export function MessageInput({ roomId, onSend, onTyping }: Readonly<MessageInputProps>) {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const { sendMessageMutation } = useChat();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    setFiles([...files, ...Array.from(e.target.files)]);
-  };
 
   const handleSend = () => {
     if (!message.trim() && files.length === 0) return;
 
-    const payload: SendMessageRequest = {
-      chatId: roomId,
-      content: message,
-      image: files[0] ? URL.createObjectURL(files[0]) : undefined,
-    };
+    const image = files[0] ? URL.createObjectURL(files[0]) : undefined;
+    console.log('[MessageInput] Sending message:', message, image);
+    onSend(roomId, message, image);
 
-    sendMessageMutation.mutate({ ...payload });
     setMessage('');
     setFiles([]);
+  };
+
+  const handleTyping = () => {
+    console.log('[MessageInput] Typing in room:', roomId);
+    onTyping(roomId);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    handleTyping();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent newline
+      handleSend();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    setFiles([...files, ...Array.from(e.target.files)]);
+    console.log('[MessageInput] Files selected:', e.target.files);
   };
 
   return (
@@ -38,10 +48,7 @@ export function MessageInput({ roomId }: Readonly<MessageInputProps>) {
       {files.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {files.map((file, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-1 bg-muted/30 px-2 py-1 rounded"
-            >
+            <div key={i} className="flex items-center gap-1 bg-muted/30 px-2 py-1 rounded">
               <span className="text-[10px] truncate">{file.name}</span>
               <button
                 onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
@@ -53,7 +60,6 @@ export function MessageInput({ roomId }: Readonly<MessageInputProps>) {
           ))}
         </div>
       )}
-
       <div className="flex items-center gap-2">
         <label className="cursor-pointer">
           <Paperclip className="w-5 h-5 text-muted-foreground hover:text-primary transition" />
@@ -68,14 +74,11 @@ export function MessageInput({ roomId }: Readonly<MessageInputProps>) {
           placeholder="Type a message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown} // <- Use this instead of handleTyping
           className="flex-1"
         />
 
-        <Button
-          size="icon"
-          onClick={handleSend}
-          disabled={!message.trim() && files.length === 0}
-        >
+        <Button size="icon" onClick={handleSend} disabled={!message.trim() && files.length === 0}>
           <Send className="w-4 h-4" />
         </Button>
       </div>

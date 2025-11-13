@@ -33,7 +33,10 @@ export const useChatApi = () => {
     },
 
     getRoom: async (roomId: string): Promise<CreateGroupResponse | null> => {
-      return fetchData<CreateGroupResponse>(`${BASE_URL}/rooms/${roomId}`, 'GET');
+      return fetchData<CreateGroupResponse>(
+        `${BASE_URL}/rooms/${roomId}`,
+        'GET'
+      );
     },
 
     getMessages: async (
@@ -50,14 +53,17 @@ export const useChatApi = () => {
       return fetchData<MessageListResponse | null>(url, 'GET');
     },
 
-    sendMessage: async (roomId: string, data: SendMessageRequest): Promise<MessageListResponse> => {
+    sendMessage: async (
+      roomId: string,
+      data: SendMessageRequest
+    ): Promise<MessageListResponse> => {
       const response = await fetchData<MessageListResponse>(
         `${BASE_URL}/rooms/${roomId}/message`,
         'POST',
         '',
         { ...data }
       );
-      console.log('Send Message Response:',  { ...data });
+      console.log('Send Message Response:', { ...data });
       if (!response) throw new Error('Failed to send message');
       return response;
     },
@@ -66,7 +72,10 @@ export const useChatApi = () => {
       return fetchData<UserListResponse>(`${BASE_URL}/rooms/user/list`, 'GET');
     },
 
-    addParticipants: async (roomId: string, userIds: string[]): Promise<CreateGroupResponse> => {
+    addParticipants: async (
+      roomId: string,
+      userIds: string[]
+    ): Promise<CreateGroupResponse> => {
       const response = await fetchData<CreateGroupResponse>(
         `${BASE_URL}/rooms/${roomId}/add-participants`,
         'POST',
