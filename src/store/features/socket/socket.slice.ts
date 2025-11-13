@@ -1,4 +1,3 @@
-// src/store/socketSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { SOCKET_SLICE_NAME } from './socket.constant';
 

@@ -54,10 +54,14 @@ export function ChatSidebar({
 
   const roomsQueryData = roomsQuery.data?.data;
 
+  console.log(roomsQueryData);
+
+
   const defaultUsers: ChatRoom[] = [
     {
-      id: currentUser?.id ?? '',
-      name: `${currentUser?.first_name} ${currentUser?.last_name} (You)`,
+      id: currentUser?.id ?? 'default-user',
+      name: `${currentUser?.first_name ?? 'User'} ${currentUser?.last_name ?? ''
+        } (You)`,
       lastMessage: '',
       unread: 0,
       isGroup: false,
@@ -75,17 +79,19 @@ export function ChatSidebar({
     if (chatId) {
       setActiveId(chatId);
     } else if (!activeId && users[0]?.id) {
-      const firstId = users[0].id;
-      setActiveId(firstId);
+      setActiveId(users[0].id);
     }
-  }, [chatId, users, activeId, navigate]);
+  }, [chatId, users, activeId]);
 
   useEffect(() => {
     if (roomsQueryData) {
       const mappedGroups = roomsQueryData.map((room: ChatRoom) => ({
-        id: room.id,
-        name: room?.groupName ?? '',
-        lastMessage: room.lastMessage || '',
+        id: room.id || `room-${Math.random()}`, // fallback for missing IDs
+        name: room?.groupName ?? `Unnamed Group`,
+        lastMessage:
+          typeof room.lastMessage === 'string'
+            ? room.lastMessage
+            : room.lastMessage?.content || '',
         unread: 0,
         isGroup: room.isGroup,
       }));
@@ -94,9 +100,6 @@ export function ChatSidebar({
     }
   }, [roomsQueryData]);
 
-  // const filteredUsers = users.filter((u) =>
-  //   u.name.toLowerCase().includes(search.toLowerCase())
-  // );
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -117,7 +120,7 @@ export function ChatSidebar({
             setGroups((prev) => [
               ...prev,
               {
-                id: newGroup.id,
+                id: newGroup.id || `room-${Math.random()}`,
                 name: groupName,
                 lastMessage: '',
                 unread: 0,
@@ -147,25 +150,30 @@ export function ChatSidebar({
     onClose?.();
   };
 
-  const renderRoom = (room: ChatRoom) => (
+  const renderRoom = (room: ChatRoom, index: number) => (
     <button
-      key={room.id}
+      key={room.id || `room-${index}`}
       type="button"
-      onClick={() => handleRoomSelect(room.id)}
+      onClick={() => handleRoomSelect(room.id || `room-${index}`)}
       className={clsx(
         'flex items-center cursor-pointer gap-3 px-4 py-3 rounded-lg w-full text-left transition',
-        activeId === room.id
+        activeId === (room.id || `room-${index}`)
           ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
           : 'hover:bg-muted/60 focus:ring-1 focus:ring-primary/30'
-      )}>
+      )}
+    >
       <Avatar className="h-9 w-9">
-        <AvatarImage src={`/avatars/${room.id}.jpg`} />
-        <AvatarFallback>{room.name.charAt(0)}</AvatarFallback>
+        <AvatarImage
+          src={room.id ? `/avatars/${room.id}.jpg` : undefined}
+        />
+        <AvatarFallback>{room.name?.charAt(0) || '?'}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{room.name}</p>
         <p className="text-xs text-muted-foreground truncate">
-          {room.lastMessage}
+          {typeof room.lastMessage === 'string'
+            ? room.lastMessage
+            : room.lastMessage?.content || ''}
         </p>
       </div>
       {room?.unread > 0 && (
@@ -177,7 +185,6 @@ export function ChatSidebar({
   );
 
   const handleLogout = () => {
-    console.log('Logout clicked');
     logoutMutation.mutate();
   };
 
@@ -196,7 +203,8 @@ export function ChatSidebar({
         <button
           aria-label="Close sidebar"
           className="md:hidden hover:bg-muted p-1 rounded-lg transition"
-          onClick={onClose}>
+          onClick={onClose}
+        >
           <IconX size={18} />
         </button>
       </div>
@@ -228,15 +236,6 @@ export function ChatSidebar({
         ) : (
           <ScrollArea className="h-full">
             <div className="mt-3 px-2">
-              {/* <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Users
-              </p>
-              {filteredUsers.length ? (
-                filteredUsers.map(renderRoom)
-              ) : (
-                <p className="text-xs text-muted-foreground px-4">No users</p>
-              )} */}
-
               <div className="mt-4 flex items-center justify-between">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Rooms
@@ -246,12 +245,14 @@ export function ChatSidebar({
                   onOpenChange={(open) => {
                     setGroupName('');
                     setIsDialogOpen(open);
-                  }}>
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-muted-foreground cursor-pointer hover:text-primary hover:bg-primary/10">
+                      className="text-muted-foreground cursor-pointer hover:text-primary hover:bg-primary/10"
+                    >
                       <IconPlus size={14} />
                     </Button>
                   </DialogTrigger>
@@ -273,7 +274,8 @@ export function ChatSidebar({
                         onClick={handleCreateGroup}
                         disabled={
                           !groupName.trim() || createGroupMutation.isPending
-                        }>
+                        }
+                      >
                         <IconUsers size={16} className="mr-1" /> Create Room
                       </Button>
                     </DialogFooter>
@@ -281,7 +283,7 @@ export function ChatSidebar({
                 </Dialog>
               </div>
               {filteredGroups.length ? (
-                filteredGroups.map(renderRoom)
+                filteredGroups.map((room, index) => renderRoom(room, index))
               ) : (
                 <p className="text-xs text-muted-foreground px-4">No groups</p>
               )}
@@ -313,7 +315,8 @@ export function ChatSidebar({
             title="Logout"
             aria-label="Logout"
             className="p-1.5 cursor-pointer rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition"
-            onClick={handleLogout}>
+            onClick={handleLogout}
+          >
             <IconLogout size={16} />
           </button>
         </div>

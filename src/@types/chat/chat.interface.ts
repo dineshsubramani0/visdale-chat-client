@@ -16,7 +16,7 @@ export interface ChatRoom {
   id: string;
   isGroup: boolean;
   name: string;
-  lastMessage?: string;
+  lastMessage?: string | { content: string };
   groupName?: string;
   unread: number;
   participants?: ChatParticipant[];
@@ -33,8 +33,31 @@ export interface ChatListResponse {
   data: ChatRoom[];
   time_stamp: string;
 }
+
 export interface UserListResponse {
   status_code: number;
   data: User[];
+  time_stamp: string;
+}
+
+export type MessageResponse = {
+  id: string;
+  content: string;
+  senderId: string;
+  sender: { first_name: string; last_name: string };
+  createdAt: string;
+  image?: string;
+  chatId: string;
+};
+
+export type SendMessageRequest = {
+  chatId: string;
+  content: string;
+  image?: string;
+};
+
+export interface MessageListResponse {
+  status_code: number;
+  data: MessageResponse[];
   time_stamp: string;
 }

@@ -1,84 +1,36 @@
-import { MessageItem, type Message } from './message-item';
-import { TypingIndicator } from './typing-indicator';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MessageItem } from './message-item';
+import { SkeletonMessages } from './skeletons';
+import type { MessageResponse } from '@/@types/chat/chat.interface';
+import { useChat } from '@/api/hooks/use-chat';
+import type { UserProfile } from '@/@types/auth/user.inferface';
+import { decrypt } from '@/lib/encryption';
+import { SessionStorageUtils } from '@/lib/session-storage-utils';
 
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    text: 'Hey everyone 👋',
-    sender: 'me',
-    name: 'You',
-    time: '10:00 AM',
-  },
-  {
-    id: 2,
-    text: 'Hi Dinesh! How’s the new feature going?',
-    sender: 'sarah',
-    name: 'Sarah',
-    time: '10:01 AM',
-  },
-  {
-    id: 3,
-    text: 'Morning folks ☀️',
-    sender: 'mike',
-    name: 'Mike',
-    time: '10:02 AM',
-  },
-  {
-    id: 4,
-    text: 'Hey Mike! Just fixing some bugs 😅',
-    sender: 'me',
-    name: 'You',
-    time: '10:03 AM',
-  },
-  {
-    id: 5,
-    text: 'Cool. Need any help with the backend?',
-    sender: 'alex',
-    name: 'Alex',
-    time: '10:04 AM',
-  },
-  {
-    id: 6,
-    text: 'Actually yes, maybe later today.',
-    sender: 'me',
-    name: 'You',
-    time: '10:05 AM',
-  },
-  {
-    id: 7,
-    text: 'I’ll be online till evening. Ping me anytime.',
-    sender: 'alex',
-    name: 'Alex',
-    time: '10:06 AM',
-  },
-  {
-    id: 8,
-    text: 'Same here 💪',
-    sender: 'mike',
-    name: 'Mike',
-    time: '10:07 AM',
-  },
-];
+interface ChatWindowProps {
+  roomId: string;
+}
 
-export function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+export function ChatWindow({ roomId }: Readonly<ChatWindowProps>) {
+  const { useMessagesQuery } = useChat();
+  const { data: messagesData, isLoading } = useMessagesQuery(roomId, 50);
+  const messages = messagesData?.data ?? [];
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const storedValue = SessionStorageUtils.getItem('_ud');
+
+  let _ud: UserProfile | null = null;
+
+  if (storedValue) {
+    const decrypted = decrypt(storedValue as string);
+    _ud = JSON.parse(decrypted as string) as UserProfile;
+  }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMessages(initialMessages);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
         behavior: 'smooth',
       });
     }
@@ -87,60 +39,54 @@ export function ChatWindow() {
   return (
     <div className="flex flex-col h-full bg-muted/10 border-l border-border">
       <div
-        ref={scrollAreaRef}
-        className="
-          flex-1 px-4 py-4 
-          overflow-y-auto 
-          scroll-smooth
-          [scrollbar-width:thin]
-          [scrollbar-color:var(--color-muted)_transparent]
-          transition-colors
-          duration-300
-          custom-scroll
-        ">
+        ref={scrollRef}
+        className="flex-1 px-4 py-4 overflow-y-auto scroll-smooth custom-scroll"
+      >
         <div className="flex flex-col space-y-4 pb-2">
-          {loading ? (
-            [...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className={`h-10 w-full max-w-[35%] rounded-2xl bg-muted/50 animate-pulse ${
-                  i % 2 === 0 ? 'ml-auto' : 'mr-auto'
-                }`}
-              />
-            ))
+          {isLoading ? (
+            <SkeletonMessages />
           ) : (
             <AnimatePresence initial={false}>
               {messages.length > 0 ? (
-                <>
-                  {messages.map((msg) => (
+                messages.map((msg: MessageResponse) => {
+                  const isMe = _ud?.id === msg.senderId;
+
+                  return (
                     <motion.div
                       key={msg.id}
                       initial={{ opacity: 0, y: 10, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.25, delay: msg.id * 0.05 }}>
-                      <MessageItem {...msg} />
+                      transition={{ duration: 0.25 }}
+                      className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <MessageItem
+                        id={msg.id}
+                        text={msg.content}
+                        sender={isMe ? 'me' : 'other'}
+                        name={msg.sender.first_name + ' ' + msg.sender.last_name}
+                        time={new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                        attachments={msg.image ? [msg.image] : []}
+                        className={isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}
+                      />
                     </motion.div>
-                  ))}
-
-                  {/* Typing indicator */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}>
-                    <TypingIndicator name="Sarah" />
-                  </motion.div>
-                </>
+                  );
+                })
               ) : (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="text-center text-sm text-muted-foreground mt-4">
+                  className="text-center text-sm text-muted-foreground mt-4"
+                >
                   No messages yet. Be the first to say something!
                 </motion.div>
               )}
             </AnimatePresence>
+
           )}
         </div>
       </div>

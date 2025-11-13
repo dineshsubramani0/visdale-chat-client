@@ -14,7 +14,7 @@ import {
 import type { CreateGroupResponse } from '@/@types/chat/chat.interface';
 
 interface ParticipantsModalProps {
-  roomData: CreateGroupResponse | undefined;
+  roomData: CreateGroupResponse | undefined | null;
 }
 
 export function ParticipantsModal({ roomData }: Readonly<ParticipantsModalProps>) {

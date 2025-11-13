@@ -40,7 +40,7 @@ export function ChatHeader({
   currentUserId,
 }: Readonly<{
   onOpenSidebar?: () => void;
-  roomData: CreateGroupResponse | undefined;
+  roomData: CreateGroupResponse | undefined | null;
   roomLoading?: boolean;
   currentUserId: string;
 }>) {
