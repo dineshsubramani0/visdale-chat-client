@@ -127,7 +127,6 @@ export function ChatSidebar({
             setIsDialogOpen(false);
           },
           onError: (error) => {
-            toast.error('Failed to create group. Please try again.');
             console.error(error);
           },
         }
