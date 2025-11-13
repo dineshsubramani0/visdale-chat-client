@@ -31,7 +31,7 @@ export function ChatWindow({ roomId, typingUsers }: Readonly<ChatWindowProps>) {
       .flatMap(page => page.messages)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messagesData]);
-    
+
   const storedValue = SessionStorageUtils.getItem('_ud');
   let currentUser: UserProfile | null = null;
   if (storedValue) {
@@ -49,16 +49,22 @@ export function ChatWindow({ roomId, typingUsers }: Readonly<ChatWindowProps>) {
     }
   }, [initialLoadDone, messages]);
 
-  // Handle scroll up to load older messages
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
+
     if (el.scrollTop === 0 && hasNextPage && !isFetchingNextPage) {
       const previousHeight = el.scrollHeight;
 
       fetchNextPage().then(() => {
         if (scrollRef.current) {
           const newHeight = scrollRef.current.scrollHeight;
-          scrollRef.current.scrollTop = newHeight - previousHeight; // Maintain scroll position
+          const diff = newHeight - previousHeight;
+
+          // Smoothly maintain scroll position after loading older messages
+          scrollRef.current.scrollTo({
+            top: diff, // maintain position
+            behavior: 'auto', // or 'smooth' if you want a smooth effect
+          });
         }
       });
     }
